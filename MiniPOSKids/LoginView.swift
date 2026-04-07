@@ -1,5 +1,6 @@
 import SwiftUI
 
+// MARK: - LoginView
 struct LoginView: View {
     @State private var username: String = ""
     @State private var password: String = ""
