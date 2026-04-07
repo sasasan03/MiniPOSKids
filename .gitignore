@@ -1,0 +1,56 @@
+# Xcode
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+xcuserdata/
+*.xcuserstate
+DerivedData/
+
+# Workspace shared settings (usually local preference)
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+*.xcworkspace/xcshareddata/WorkspaceSettings.xcsettings
+
+# Build artifacts
+build/
+.build/
+*.o
+*.d
+*.ipa
+*.dSYM
+*.dSYM.zip
+
+# CocoaPods
+Pods/
+# Podfile.lock は通常コミットするので ignore しない
+
+# Swift Package Manager
+.swiftpm/
+# Package.resolved は通常コミットするので ignore しない
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+# Environment / Secrets
+*.env
+.env.*
+Secrets.swift
+Secrets.plist
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor temp files
+*.swp
+*~
+
+# Playground
+timeline.xctimeline
+playground.xcworkspace
