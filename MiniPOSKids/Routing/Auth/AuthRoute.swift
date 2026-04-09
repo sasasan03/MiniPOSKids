@@ -6,3 +6,9 @@
 //
 
 import Foundation
+
+enum AuthRoute: Hashable {
+    case login
+    case home
+    case web
+}

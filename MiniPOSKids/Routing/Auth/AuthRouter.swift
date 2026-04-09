@@ -6,3 +6,14 @@
 //
 
 import Foundation
+import Observation
+
+@Observable
+final class AuthRouter {
+    var path: [AuthRoute] = []
+    
+    @discardableResult
+    func navigationBack() -> AuthRoute? {
+        path.popLast()
+    }
+}
