@@ -1,16 +1,13 @@
 name: Claude PR Review
-
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - '**/*.swift'
       - '**/*.xcodeproj/**'
-
 permissions:
   contents: read
   pull-requests: write
-
 jobs:
   review:
     runs-on: ubuntu-latest
@@ -25,6 +22,7 @@ jobs:
         run: |
           git diff origin/${{ github.base_ref }}...HEAD -- '*.swift' > pr_diff.txt
           echo "diff_size=$(wc -c < pr_diff.txt)" >> $GITHUB_OUTPUT
+          echo "Diff size: $(wc -c < pr_diff.txt) bytes"
 
       - name: Review with Claude
         id: claude_review
@@ -33,8 +31,6 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           DIFF=$(cat pr_diff.txt)
-
-          # diffが大きすぎる場合は先頭100KB に切り詰める
           if [ ${#DIFF} -gt 100000 ]; then
             DIFF="${DIFF:0:100000}"$'\n\n...(diff truncated)'
           fi
@@ -51,15 +47,37 @@ jobs:
               }]
             }')
 
-          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+          echo "========================================="
+          echo "🔍 デバッグ情報"
+          echo "========================================="
+          echo "APIキーの有無: $([ -n "$ANTHROPIC_API_KEY" ] && echo 'あり' || echo 'なし')"
+          echo "APIキーの長さ: ${#ANTHROPIC_API_KEY}"
+          echo "========================================="
+
+          # HTTPステータスコードも取得
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" https://api.anthropic.com/v1/messages \
             -H "Content-Type: application/json" \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -d "$PAYLOAD")
 
-          REVIEW=$(echo "$RESPONSE" | jq -r '.content[0].text // "レビューの取得に失敗しました。"')
+          # HTTPステータスコードを抽出
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
 
-          # 改行をエスケープしてGITHUB_OUTPUTに書き出す
+          echo "HTTPステータス: $HTTP_STATUS"
+          echo "========================================="
+          echo "📡 APIレスポンス:"
+          echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
+          echo "========================================="
+
+          if [ "$HTTP_STATUS" = "200" ]; then
+            REVIEW=$(echo "$RESPONSE_BODY" | jq -r '.content[0].text // "レビューの取得に失敗しました。"')
+          else
+            ERROR_MSG=$(echo "$RESPONSE_BODY" | jq -r '.error.message // .error // "不明なエラー"' 2>/dev/null || echo "$RESPONSE_BODY")
+            REVIEW="⚠️ **APIエラーが発生しました**\n\n- HTTPステータス: $HTTP_STATUS\n- エラー内容: $ERROR_MSG\n\n**確認事項:**\n1. ANTHROPIC_API_KEYが正しく設定されているか\n2. APIキーに十分な権限があるか\n3. API利用制限に達していないか"
+          fi
+
           {
             echo "review<<EOF"
             echo "$REVIEW"
