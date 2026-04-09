@@ -6,11 +6,25 @@
 //
 
 import SwiftUI
+import WebKit
 
 struct SmaregiWebView: View {
+    @State private var webPage = WebPage()
+    private let url = URL(string: "https://developers.smaregi.jp/signup/")!
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack {
+            WebView(webPage)
+                .onAppear {
+                    webPage.load(URLRequest(url: url))
+                }
+            if webPage.estimatedProgress < 1 {
+                  ProgressView(value: webPage.estimatedProgress)
+                      .progressViewStyle(CircularProgressViewStyle())
+            }
+        }
     }
+
 }
 
 #Preview {
