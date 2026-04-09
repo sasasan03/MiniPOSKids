@@ -8,8 +8,34 @@
 import SwiftUI
 
 struct AppRootView: View {
+    @State private var path = AuthRouter()
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack(path: $path.path) {
+            root
+                .navigationDestination(for: AuthRoute.self) { route in
+                    switch route {
+                    case .home:
+                        Text("ホーム")
+                    case .login:
+                        LoginView()
+                    case .web:
+                        SmaregiWebView()
+                    }
+                }
+        }
+        .environment(path)
+    }
+        
+    
+    @ViewBuilder
+    private var root: some View {
+        if path.path.isEmpty {
+            LoginView()
+        } else {
+            Text("未実装")
+        }
+
     }
 }
 
