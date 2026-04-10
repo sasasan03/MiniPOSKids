@@ -84,7 +84,6 @@ struct LoginView: View {
             #else
             let isAuthenticated = false
             #endif
-        
         if isAuthenticated {
             showError = false
             isLoggedIn = true
