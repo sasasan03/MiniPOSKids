@@ -1,102 +1,137 @@
 name: Claude PR Review
+
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - '**/*.swift'
       - '**/*.xcodeproj/**'
+
 permissions:
   contents: read
   pull-requests: write
+
 jobs:
   review:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Fetch base branch
+        run: git fetch origin ${{ github.base_ref }}:${{ github.base_ref }}
+
       - name: Get PR diff
         id: diff
+        shell: bash
         run: |
-          git diff origin/${{ github.base_ref }}...HEAD -- '*.swift' > pr_diff.txt
-          echo "diff_size=$(wc -c < pr_diff.txt)" >> $GITHUB_OUTPUT
-          echo "Diff size: $(wc -c < pr_diff.txt) bytes"
+          git diff ${{ github.base_ref }}...HEAD -- '*.swift' '*.pbxproj' > pr_diff.txt
+          echo "diff_size=$(wc -c < pr_diff.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+          echo "=== diff size ==="
+          cat "$GITHUB_OUTPUT"
 
       - name: Review with Claude
         id: claude_review
         if: steps.diff.outputs.diff_size != '0'
+        shell: bash
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          DIFF=$(cat pr_diff.txt)
+          set -euo pipefail
+
+          DIFF="$(cat pr_diff.txt)"
+
           if [ ${#DIFF} -gt 100000 ]; then
             DIFF="${DIFF:0:100000}"$'\n\n...(diff truncated)'
           fi
 
           PAYLOAD=$(jq -n \
+            --arg pr_title "$PR_TITLE" \
+            --arg pr_number "$PR_NUMBER" \
+            --arg pr_url "$PR_URL" \
             --arg diff "$DIFF" \
-            --arg pr_title "${{ github.event.pull_request.title }}" \
             '{
-              model: "claude-opus-4-5",
+              model: "claude-3-7-sonnet-latest",
               max_tokens: 4096,
-              messages: [{
-                role: "user",
-                content: ("あなたはiOS/Swiftの熟練コードレビュアーです。\n以下のPRをレビューしてください。\n\n## PRタイトル\n" + $pr_title + "\n\n## 変更内容 (git diff)\n```diff\n" + $diff + "\n```\n\n以下の観点でレビューし、日本語でMarkdown形式にまとめてください：\n\n1. **コード品質** — 命名、可読性、Swiftらしさ\n2. **バグ・潜在的問題** — クラッシュ、メモリリーク、スレッドセーフ\n3. **セキュリティ** — 入力検証、APIキー露出など\n4. **パフォーマンス** — 不要な処理、UI更新の最適化\n5. **提案** — より良い実装や改善案\n\n問題がない場合はその旨を明記してください。")
-              }]
+              messages: [
+                {
+                  role: "user",
+                  content: (
+                    "あなたはiOS/Swiftの熟練コードレビュアーです。\n" +
+                    "以下のPull Requestをレビューしてください。\n\n" +
+                    "## PR情報\n" +
+                    "- タイトル: " + $pr_title + "\n" +
+                    "- PR番号: #" + $pr_number + "\n" +
+                    "- URL: " + $pr_url + "\n\n" +
+                    "## 変更内容 (git diff)\n" +
+                    "```diff\n" + $diff + "\n```\n\n" +
+                    "以下の観点で、日本語・Markdown形式で簡潔にレビューしてください。\n" +
+                    "問題がない場合も『大きな問題なし』のように明記してください。\n\n" +
+                    "1. コード品質（命名、可読性、Swiftらしさ）\n" +
+                    "2. バグ・潜在的問題（クラッシュ、状態管理、境界条件）\n" +
+                    "3. セキュリティ（機密情報、入力値、権限）\n" +
+                    "4. パフォーマンス（不要な再描画、無駄な処理）\n" +
+                    "5. 改善提案\n\n" +
+                    "出力形式:\n" +
+                    "## Claude PR Review 🤖\n" +
+                    "- 総評\n" +
+                    "- 指摘事項\n" +
+                    "- 改善提案\n"
+                  )
+                }
+              ]
             }')
 
-          echo "========================================="
-          echo "🔍 デバッグ情報"
-          echo "========================================="
-          echo "APIキーの有無: $([ -n "$ANTHROPIC_API_KEY" ] && echo 'あり' || echo 'なし')"
-          echo "APIキーの長さ: ${#ANTHROPIC_API_KEY}"
-          echo "========================================="
-
-          # HTTPステータスコードも取得
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" https://api.anthropic.com/v1/messages \
+          RESPONSE=$(curl -sS https://api.anthropic.com/v1/messages \
             -H "Content-Type: application/json" \
             -H "x-api-key: $ANTHROPIC_API_KEY" \
             -H "anthropic-version: 2023-06-01" \
             -d "$PAYLOAD")
 
-          # HTTPステータスコードを抽出
-          HTTP_STATUS=$(echo "$RESPONSE" | grep "HTTP_STATUS:" | cut -d':' -f2)
-          RESPONSE_BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS:/d')
+          echo "=== Claude raw response ==="
+          echo "$RESPONSE"
 
-          echo "HTTPステータス: $HTTP_STATUS"
-          echo "========================================="
-          echo "📡 APIレスポンス:"
-          echo "$RESPONSE_BODY" | jq '.' 2>/dev/null || echo "$RESPONSE_BODY"
-          echo "========================================="
+          ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message // empty')
+          if [ -n "$ERROR_MSG" ]; then
+            echo "Claude API error: $ERROR_MSG"
+            exit 1
+          fi
 
-          if [ "$HTTP_STATUS" = "200" ]; then
-            REVIEW=$(echo "$RESPONSE_BODY" | jq -r '.content[0].text // "レビューの取得に失敗しました。"')
-          else
-            ERROR_MSG=$(echo "$RESPONSE_BODY" | jq -r '.error.message // .error // "不明なエラー"' 2>/dev/null || echo "$RESPONSE_BODY")
-            REVIEW="⚠️ **APIエラーが発生しました**\n\n- HTTPステータス: $HTTP_STATUS\n- エラー内容: $ERROR_MSG\n\n**確認事項:**\n1. ANTHROPIC_API_KEYが正しく設定されているか\n2. APIキーに十分な権限があるか\n3. API利用制限に達していないか"
+          REVIEW=$(echo "$RESPONSE" | jq -r '.content[0].text // empty')
+
+          if [ -z "$REVIEW" ]; then
+            echo "Claude review text is empty"
+            exit 1
           fi
 
           {
             echo "review<<EOF"
             echo "$REVIEW"
             echo "EOF"
-          } >> $GITHUB_OUTPUT
+          } >> "$GITHUB_OUTPUT"
 
       - name: Post review comment
         if: steps.diff.outputs.diff_size != '0'
         uses: actions/github-script@v7
+        env:
+          REVIEW_BODY: ${{ steps.claude_review.outputs.review }}
         with:
           script: |
-            const review = `## Claude PR Review 🤖\n\n${{ steps.claude_review.outputs.review }}`;
+            const body = process.env.REVIEW_BODY || "レビュー本文を取得できませんでした。";
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
-              body: review
+              body
             });
 
       - name: No Swift changes
         if: steps.diff.outputs.diff_size == '0'
-        run: echo "Swiftファイルの変更がないためレビューをスキップしました。"
+        run: echo "Swift / Xcode project の変更がないためレビューをスキップしました。"
