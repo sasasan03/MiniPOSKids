@@ -78,8 +78,14 @@ struct LoginView: View {
     }
     
     private func handleLogin() {
-        // TODO: 実際の認証処理に置き換える
-        if username == "admin" && password == "password" {
+        // TODO: Replace with server/API authentication
+        `#if` DEBUG
+        let isAuthenticated = (username == "admin" && password == "password")
+        `#else`
+        let isAuthenticated = false
+        `#endif`
+
+        if isAuthenticated {
             showError = false
             isLoggedIn = true
             router.path.append(.home)
