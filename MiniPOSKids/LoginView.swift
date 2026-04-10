@@ -27,11 +27,17 @@ struct LoginView: View {
             // 入力フォーム
             VStack(spacing: 16) {
                 TextField("ユーザー名", text: $username)
+                    .onChange(of: username) {
+                        showError = false
+                    }
                     .textFieldStyle(.roundedBorder)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                 
                 SecureField("パスワード", text: $password)
+                    .onChange(of: password) {
+                        showError = false
+                    }
                     .textFieldStyle(.roundedBorder)
             }
             .padding(.horizontal, 32)
