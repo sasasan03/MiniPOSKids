@@ -16,7 +16,7 @@ struct AppRootView: View {
                 .navigationDestination(for: AuthRoute.self) { route in
                     switch route {
                     case .home:
-                        Text("ホーム")
+                        HomeView()
                     case .login:
                         LoginView()
                     case .web:

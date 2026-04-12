@@ -15,6 +15,9 @@
 		693B763E2F8741760078FCAD /* AuthRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693B763D2F8741760078FCAD /* AuthRouter.swift */; };
 		693B76402F8763490078FCAD /* SmaregiWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693B763F2F8763490078FCAD /* SmaregiWebView.swift */; };
 		693B76482F8770CB0078FCAD /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693B76472F8770CB0078FCAD /* LoginView.swift */; };
+		6946CCFD2F8B211400E9445E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CCFC2F8B211400E9445E /* HomeView.swift */; };
+		6946CCFF2F8B217700E9445E /* HomeRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CCFE2F8B217700E9445E /* HomeRouter.swift */; };
+		6946CD012F8B218000E9445E /* HomeRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CD002F8B218000E9445E /* HomeRoute.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -43,6 +46,9 @@
 		693B763D2F8741760078FCAD /* AuthRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthRouter.swift; sourceTree = "<group>"; };
 		693B763F2F8763490078FCAD /* SmaregiWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmaregiWebView.swift; sourceTree = "<group>"; };
 		693B76472F8770CB0078FCAD /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
+		6946CCFC2F8B211400E9445E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		6946CCFE2F8B217700E9445E /* HomeRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRouter.swift; sourceTree = "<group>"; };
+		6946CD002F8B218000E9445E /* HomeRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRoute.swift; sourceTree = "<group>"; };
 		697E5F342F84D5B0008C8E1D /* MiniPOSKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniPOSKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		697E5F412F84D5B3008C8E1D /* MiniPOSKidsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiniPOSKidsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		697E5F4B2F84D5B3008C8E1D /* MiniPOSKidsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiniPOSKidsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -90,10 +96,9 @@
 			isa = PBXGroup;
 			children = (
 				693B76392F8741040078FCAD /* Routing */,
-				693B762E2F8740330078FCAD /* App */,
-				693B76252F873FD80078FCAD /* Assets.xcassets */,
-				693B76472F8770CB0078FCAD /* LoginView.swift */,
-				693B763F2F8763490078FCAD /* SmaregiWebView.swift */,
+				6946CCEA2F8B1C0B00E9445E /* Model */,
+				6946CCE92F8B1C0400E9445E /* ViewModel */,
+				6946CCE82F8B1BFB00E9445E /* View */,
 			);
 			path = MiniPOSKids;
 			sourceTree = "<group>";
@@ -112,6 +117,7 @@
 			isa = PBXGroup;
 			children = (
 				693B763A2F87415A0078FCAD /* Auth */,
+				6946CCF92F8B20F000E9445E /* Home */,
 			);
 			path = Routing;
 			sourceTree = "<group>";
@@ -125,10 +131,61 @@
 			path = Auth;
 			sourceTree = "<group>";
 		};
+		6946CCE82F8B1BFB00E9445E /* View */ = {
+			isa = PBXGroup;
+			children = (
+				693B762E2F8740330078FCAD /* App */,
+				6946CCF72F8B1D2700E9445E /* Auth */,
+				6946CCF82F8B1D3800E9445E /* Home */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		6946CCE92F8B1C0400E9445E /* ViewModel */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = ViewModel;
+			sourceTree = "<group>";
+		};
+		6946CCEA2F8B1C0B00E9445E /* Model */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Model;
+			sourceTree = "<group>";
+		};
+		6946CCF72F8B1D2700E9445E /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				693B763F2F8763490078FCAD /* SmaregiWebView.swift */,
+				693B76472F8770CB0078FCAD /* LoginView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		6946CCF82F8B1D3800E9445E /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				6946CCFC2F8B211400E9445E /* HomeView.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
+		6946CCF92F8B20F000E9445E /* Home */ = {
+			isa = PBXGroup;
+			children = (
+				6946CD002F8B218000E9445E /* HomeRoute.swift */,
+				6946CCFE2F8B217700E9445E /* HomeRouter.swift */,
+			);
+			path = Home;
+			sourceTree = "<group>";
+		};
 		697E5F2B2F84D5B0008C8E1D = {
 			isa = PBXGroup;
 			children = (
 				693B76292F873FD80078FCAD /* MiniPOSKids */,
+				693B76252F873FD80078FCAD /* Assets.xcassets */,
 				697E5F442F84D5B3008C8E1D /* MiniPOSKidsTests */,
 				697E5F4E2F84D5B3008C8E1D /* MiniPOSKidsUITests */,
 				697E5F352F84D5B0008C8E1D /* Products */,
@@ -287,12 +344,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6946CD012F8B218000E9445E /* HomeRoute.swift in Sources */,
 				693B76402F8763490078FCAD /* SmaregiWebView.swift in Sources */,
 				693B763E2F8741760078FCAD /* AuthRouter.swift in Sources */,
 				693B76362F8740D20078FCAD /* AppRootView.swift in Sources */,
 				693B76382F8740EC0078FCAD /* AppState.swift in Sources */,
 				693B763C2F87416E0078FCAD /* AuthRoute.swift in Sources */,
+				6946CCFD2F8B211400E9445E /* HomeView.swift in Sources */,
 				693B76482F8770CB0078FCAD /* LoginView.swift in Sources */,
+				6946CCFF2F8B217700E9445E /* HomeRouter.swift in Sources */,
 				693B762D2F873FD80078FCAD /* MiniPOSKidsApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
