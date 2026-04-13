@@ -8,8 +8,20 @@
 import SwiftUI
 
 struct ProductBarcodeView: View {
+    private let colors: [Color] = [.pink, .blue, .orange, .green]
+
+    let columns = [
+        GridItem(.flexible()),
+        GridItem(.flexible())
+    ]
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        LazyVGrid(columns: columns) {
+            BarcodeRow()
+            BarcodeRow()
+            BarcodeRow()
+            BarcodeRow()
+        }
+        .frame(width: 300)
     }
 }
 

@@ -9,7 +9,11 @@ import SwiftUI
 
 struct BuyerQRCodeView: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        VStack {
+            Text("利用可能額は 1000円")
+            Color.red
+                .frame(width: 300, height: 300)
+        }
     }
 }
 

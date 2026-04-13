@@ -8,11 +8,26 @@
 import SwiftUI
 
 struct StoreListView: View {
+    
+    @Environment(HomeRouter.self) private var router
+    @State private var dummyStore = [
+        "店舗A",
+        "店舗B"
+    ]
+    
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        List {
+            ForEach(dummyStore, id: \.self) { store in
+                Row(title: store) {
+                    router.navigationHomeRoutePush(.printProductBarcode)
+                }
+            }
+            
+        }
     }
 }
 
 #Preview {
     StoreListView()
+        .environment(HomeRouter())
 }

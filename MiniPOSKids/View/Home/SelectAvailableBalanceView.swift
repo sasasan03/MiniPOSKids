@@ -8,11 +8,21 @@
 import SwiftUI
 
 struct SelectAvailableBalanceView: View {
+    @Environment(HomeRouter.self) private var router
+    let dummyPrice = ["1000", "2000", "3000"]
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        List {
+            ForEach(dummyPrice, id: \.self) { store in
+                Row(title: store) {
+                    router.navigationHomeRoutePush(.showBuyerQRCode)
+                }
+            }
+            
+        }
     }
 }
 
 #Preview {
     SelectAvailableBalanceView()
+        .environment(HomeRouter())
 }

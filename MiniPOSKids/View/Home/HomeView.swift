@@ -9,17 +9,17 @@ import SwiftUI
 
 struct HomeView: View {
     
-    @State private var router = HomeRouter()
+    @Environment(HomeRouter.self) var router
     
     var body: some View {
         List {
-            Button("登録店舗一覧") {
-                router.navigationHomeRoutePush(.printProductBarcode)
+            Row(title: "登録店舗一覧") {
+                router.navigationHomeRoutePush(.storeList)
             }
-            Button("利用可能残高選択"){
-                router.navigationHomeRoutePush(.showBuyerQRCode)
+            Row(title: "利用可能残高選択") {
+                router.navigationHomeRoutePush(.selectAvailableBalance)
             }
-            Button("レジ画面"){
+            Row(title: "レジ画面") {
                 router.navigationHomeRoutePush(.cashRegister)
             }
         }
@@ -28,4 +28,5 @@ struct HomeView: View {
 
 #Preview {
     HomeView()
+        .environment(HomeRouter())
 }

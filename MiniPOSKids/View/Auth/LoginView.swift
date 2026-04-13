@@ -87,7 +87,7 @@ struct LoginView: View {
     private func handleLogin() {
             // TODO: Replace with server/API authentication
             #if DEBUG
-            let isAuthenticated = (username == "1" && password == "1")
+            let isAuthenticated = (username == "q" && password == "q")
             #else
             let isAuthenticated = false
             #endif

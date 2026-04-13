@@ -8,11 +8,28 @@
 import SwiftUI
 
 struct ScanQRCodeView: View {
+    @Environment(HomeRouter.self) var router
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        ZStack {
+            Color.black
+            VStack {
+                Button {
+                    router.navigationHomeRoutePush(.purchaseSuccess)
+                } label: {
+                    Text("読み取り成功")
+                }
+                
+                Button {
+                    router.navigationHomeRoutePush(.purchaseFailure)
+                } label: {
+                    Text("読み取り失敗")
+                }
+            }
+        }
     }
 }
 
 #Preview {
     ScanQRCodeView()
+        .environment(HomeRouter())
 }
