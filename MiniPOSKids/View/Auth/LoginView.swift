@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LoginView: View {
     @Environment(AuthRouter.self) private var router
+    @Environment(AppState.self) private var appState
     @State private var username: String = ""
     @State private var password: String = ""
     @State private var isLoggedIn: Bool = false
@@ -73,7 +74,7 @@ struct LoginView: View {
                 }
                 .padding(.vertical, 13)
                 appHowTo
-                .padding(20)
+                    .padding(20)
             }
             Spacer()
         }
@@ -84,16 +85,16 @@ struct LoginView: View {
     }
     
     private func handleLogin() {
-            // TODO: Replace with server/API authentication
-            #if DEBUG
-            let isAuthenticated = (username == "admin" && password == "password")
-            #else
-            let isAuthenticated = false
-            #endif
+        // TODO: Replace with server/API authentication
+#if DEBUG
+        let isAuthenticated = (username == "q" && password == "q")
+#else
+        let isAuthenticated = (username == "q" && password == "q")
+#endif
         if isAuthenticated {
             showError = false
             isLoggedIn = true
-            router.path.append(.home)
+            appState.loginSucceeded()
         } else {
             showError = true
         }
@@ -137,9 +138,11 @@ struct LoginView: View {
 
 private struct PreviewContainer: View {
     @State private var router = AuthRouter()
+    @State private var appState = AppState()
     
     var body: some View {
         LoginView()
             .environment(router)
+            .environment(appState)
     }
 }

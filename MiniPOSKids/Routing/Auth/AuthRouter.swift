@@ -11,9 +11,17 @@ import Observation
 @Observable
 final class AuthRouter {
     var path: [AuthRoute] = []
-    
+
+    func push(_ route: AuthRoute) {
+        path.append(route)
+    }
+
     @discardableResult
     func navigationBack() -> AuthRoute? {
         path.popLast()
+    }
+
+    func popToRoot() {
+        path.removeAll()
     }
 }
