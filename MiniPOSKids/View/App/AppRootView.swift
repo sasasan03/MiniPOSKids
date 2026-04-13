@@ -8,34 +8,19 @@
 import SwiftUI
 
 struct AppRootView: View {
-    @State private var path = AuthRouter()
+    @State private var appState = AppState()
     
     var body: some View {
-        NavigationStack(path: $path.path) {
-            root
-                .navigationDestination(for: AuthRoute.self) { route in
-                    switch route {
-                    case .home:
-                        HomeView()
-                    case .login:
-                        LoginView()
-                    case .web:
-                        SmaregiWebView()
-                    }
-                }
+        Group {
+            if appState.session == .unauthenticated {
+                AuthRootView()
+            } else if appState.session == .authenticated {
+                HomeRootView()
+            } else {
+                Text("session is not set")
+            }
         }
-        .environment(path)
-    }
-        
-    
-    @ViewBuilder
-    private var root: some View {
-        if path.path.isEmpty {
-            LoginView()
-        } else {
-            Text("未実装")
-        }
-
+        .environment(appState)
     }
 }
 
