@@ -26,21 +26,29 @@ struct HomeRootView: View {
         case .home:
             HomeView()
         case .storeList:
-            Text("登録店舗一覧")
+            StoreListView()
+                .navigationTitle("登録店舗一覧")
         case .printProductBarcode:
-            Text("商品バーコード")
+            ProductBarcodeView()
+                .navigationTitle("商品バーコード")
         case .selectAvailableBalance:
-            Text("利用可能残高選択画面")
+            SelectAvailableBalanceView()
+                .navigationTitle("利用可能残高選択画面")
         case .showBuyerQRCode:
-            Text("QRコード決済画面（購入者がわ）")
+            BuyerQRCodeView()
+                .navigationTitle("QRコード決済画面")
         case .cashRegister:
-            Text("レジ画面")
+            CashRegisterView()
+                .navigationTitle("レジ画面")
         case .scanProductBarcode:
-            Text("バーコード読み取り画面")
+            ScanProductBarcodeView()
+                .navigationTitle("バーコード読み取り画面")
         case .purchaseSuccess:
-            Text("購入完了画面")
+            PurchaseSuccessView()
+                .navigationTitle("支払い完了")
         case .purchaseFailure:
-            Text("購入失敗画面")
+            PurchaseFailureView()
+                .navigationTitle("支払い失敗")
         }
     }
 }
