@@ -17,10 +17,10 @@ struct Row: View {
         } label: {
             HStack {
                 Text(title)
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
             }
         }
     }

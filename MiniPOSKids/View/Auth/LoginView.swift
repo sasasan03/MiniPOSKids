@@ -74,7 +74,7 @@ struct LoginView: View {
                 }
                 .padding(.vertical, 13)
                 appHowTo
-                .padding(20)
+                    .padding(20)
             }
             Spacer()
         }
@@ -85,12 +85,12 @@ struct LoginView: View {
     }
     
     private func handleLogin() {
-            // TODO: Replace with server/API authentication
-            #if DEBUG
-            let isAuthenticated = (username == "q" && password == "q")
-            #else
-            let isAuthenticated = false
-            #endif
+        // TODO: Replace with server/API authentication
+#if DEBUG
+        let isAuthenticated = (username == "q" && password == "q")
+#else
+        let isAuthenticated = (username == "q" && password == "q")
+#endif
         if isAuthenticated {
             showError = false
             isLoggedIn = true

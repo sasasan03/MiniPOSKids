@@ -26,7 +26,7 @@ struct PurchaseFailureView: View {
         VStack(spacing: 30) {
             Spacer()
             Text("不足しているお金は 3000円です")
-            Text("購入商品合計見学は 2000円です")
+            Text("購入商品合計金額は 2000円です")
             Spacer()
             Button("レジ画面へ戻る") {
                 router.backToCashRegister()

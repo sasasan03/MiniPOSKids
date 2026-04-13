@@ -13,11 +13,14 @@ final class HomeRouter {
     var path = NavigationPath()
     
     func navigationBack() {
+        guard !path.isEmpty else { return }
         path.removeLast()
     }
     
     func backToCashRegister() {
-        path.removeLast(2)
+        let popCount = min(2, path.count)
+        guard popCount > 0 else { return }
+        path.removeLast(popCount)
     }
     
     func navigationHomeRoutePush(_ route: HomeRoute) {
