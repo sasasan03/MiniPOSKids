@@ -12,12 +12,12 @@ import SwiftUI
 final class HomeRouter {
     var path = NavigationPath()
     
-//    @discardableResult
-//    func navigationBack() -> AuthRoute? {
-//        path.popLast()
-//    }
+    func navigationBack() {
+        path.removeLast()
+    }
     
-    func navigationPush(_ route: HomeRoute) {
+    func navigationHomeRoutePush(_ route: HomeRoute) {
         path.append(route)
     }
+    
 }
