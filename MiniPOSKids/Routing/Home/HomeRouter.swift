@@ -16,6 +16,10 @@ final class HomeRouter {
         path.removeLast()
     }
     
+    func backToCashRegister() {
+        path.removeLast(2)
+    }
+    
     func navigationHomeRoutePush(_ route: HomeRoute) {
         path.append(route)
     }

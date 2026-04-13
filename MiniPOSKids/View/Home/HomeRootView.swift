@@ -43,6 +43,9 @@ struct HomeRootView: View {
         case .scanProductBarcode:
             ScanProductBarcodeView()
                 .navigationTitle("バーコード読み取り画面")
+        case .scanQRCode:
+            ScanQRCodeView()
+                .navigationTitle("QRコード読み取り画面")
         case .purchaseSuccess:
             PurchaseSuccessView()
                 .navigationTitle("支払い完了")
