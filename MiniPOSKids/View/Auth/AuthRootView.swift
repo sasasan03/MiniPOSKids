@@ -9,7 +9,11 @@ import SwiftUI
 
 struct AuthRootView: View {
     @State private var router = AuthRouter()
-    
+    @State private var authService = AuthService(
+        apiClient: APIClient(baseURL: "https://id.smaregi.dev"),
+        tokenStore: TokenStore()
+    )
+
     var body: some View {
         NavigationStack(path: $router.path) {
             makeView(route: .login)
@@ -18,6 +22,7 @@ struct AuthRootView: View {
                 }
         }
         .environment(router)
+        .environment(authService)
     }
     
     @ViewBuilder

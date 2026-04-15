@@ -1,8 +1,15 @@
+//
+//  LoginView.swift
+//  MiniPOSKids
+//
+
 import SwiftUI
 
 struct LoginView: View {
     @Environment(AuthRouter.self) private var router
     @Environment(AppState.self) private var appState
+    @Environment(AuthService.self) private var authService
+    @State private var viewModel = LoginViewModel()
 
     var body: some View {
         VStack(spacing: 24) {
@@ -21,11 +28,19 @@ struct LoginView: View {
                     .fontWeight(.bold)
             }
 
+            if let errorMessage = viewModel.errorMessage {
+                Text(errorMessage)
+                    .foregroundStyle(.red)
+                    .font(.caption)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+
             // ログインボタン
             Button {
-                handleLogin()
+                viewModel.login(authService: authService, onSuccess: appState.loginSucceeded)
             } label: {
-                Text("ログイン")
+                Text("スマレジでログイン")
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
@@ -33,7 +48,7 @@ struct LoginView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .padding(.horizontal, 32)
-            
+
             // スマレジデベロッパの登録
             VStack {
                 HStack {
@@ -49,18 +64,12 @@ struct LoginView: View {
             Spacer()
         }
     }
-    
-    private func handleLogin() {
-        appState.loginSucceeded()
-    }
-    
+
     private var appHowTo: some View {
         ZStack {
-            // TODO: アプリを始めてダウンロードした人がこの画面を開いた時に、 こちらボタンにポップアップを表示させて、商品の登録にはスマレジデベロッパの登録を行い、商品の登録を行う必要があることを伝えたい
             VStack {
-                //TODO: 細かな説明に修正
                 Text("初めてお使いになる方へ")
-                    .font(.system(size: 20,weight: .bold))
+                    .font(.system(size: 20, weight: .bold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 5)
                 VStack(alignment: .leading) {
@@ -93,7 +102,7 @@ struct LoginView: View {
 private struct PreviewContainer: View {
     @State private var router = AuthRouter()
     @State private var appState = AppState()
-    
+
     var body: some View {
         LoginView()
             .environment(router)
