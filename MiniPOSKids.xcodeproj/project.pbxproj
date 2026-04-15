@@ -18,6 +18,10 @@
 		6946CCFD2F8B211400E9445E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CCFC2F8B211400E9445E /* HomeView.swift */; };
 		6946CCFF2F8B217700E9445E /* HomeRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CCFE2F8B217700E9445E /* HomeRouter.swift */; };
 		6946CD012F8B218000E9445E /* HomeRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CD002F8B218000E9445E /* HomeRoute.swift */; };
+		69BA5F262F8F5F3C00FF3C71 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */; };
+		69BA5F2A2F8F5FF700FF3C71 /* AuthAPIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F292F8F5FF700FF3C71 /* AuthAPIError.swift */; };
+		69BA5F2C2F8F60BD00FF3C71 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */; };
+		69BA5F2E2F8F62FF00FF3C71 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F2D2F8F62FF00FF3C71 /* APIError.swift */; };
 		69F095AD2F8C4E8A00477B4F /* AuthRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69F095AC2F8C4E8A00477B4F /* AuthRootView.swift */; };
 		69F095AF2F8C4ED500477B4F /* HomeRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69F095AE2F8C4ED500477B4F /* HomeRootView.swift */; };
 		69F095B92F8C820A00477B4F /* StoreListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69F095B82F8C820A00477B4F /* StoreListView.swift */; };
@@ -65,6 +69,10 @@
 		697E5F342F84D5B0008C8E1D /* MiniPOSKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniPOSKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		697E5F412F84D5B3008C8E1D /* MiniPOSKidsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiniPOSKidsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		697E5F4B2F84D5B3008C8E1D /* MiniPOSKidsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiniPOSKidsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
+		69BA5F292F8F5FF700FF3C71 /* AuthAPIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthAPIError.swift; sourceTree = "<group>"; };
+		69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		69BA5F2D2F8F62FF00FF3C71 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
 		69F095AC2F8C4E8A00477B4F /* AuthRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthRootView.swift; sourceTree = "<group>"; };
 		69F095AE2F8C4ED500477B4F /* HomeRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRootView.swift; sourceTree = "<group>"; };
 		69F095B82F8C820A00477B4F /* StoreListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreListView.swift; sourceTree = "<group>"; };
@@ -126,6 +134,9 @@
 				6946CCEA2F8B1C0B00E9445E /* Model */,
 				6946CCE92F8B1C0400E9445E /* ViewModel */,
 				6946CCE82F8B1BFB00E9445E /* View */,
+				69BA5F242F8F5EB300FF3C71 /* Client */,
+				69BA5F282F8F5FD400FF3C71 /* Service */,
+				69BA5F272F8F5FB500FF3C71 /* Error */,
 			);
 			path = MiniPOSKids;
 			sourceTree = "<group>";
@@ -238,6 +249,31 @@
 				697E5F4B2F84D5B3008C8E1D /* MiniPOSKidsUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		69BA5F242F8F5EB300FF3C71 /* Client */ = {
+			isa = PBXGroup;
+			children = (
+				69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */,
+			);
+			path = Client;
+			sourceTree = "<group>";
+		};
+		69BA5F272F8F5FB500FF3C71 /* Error */ = {
+			isa = PBXGroup;
+			children = (
+				69BA5F292F8F5FF700FF3C71 /* AuthAPIError.swift */,
+				69BA5F2D2F8F62FF00FF3C71 /* APIError.swift */,
+			);
+			path = Error;
+			sourceTree = "<group>";
+		};
+		69BA5F282F8F5FD400FF3C71 /* Service */ = {
+			isa = PBXGroup;
+			children = (
+				69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */,
+			);
+			path = Service;
 			sourceTree = "<group>";
 		};
 		69F095C82F8C84AB00477B4F /* Components */ = {
@@ -391,6 +427,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				69BA5F2A2F8F5FF700FF3C71 /* AuthAPIError.swift in Sources */,
 				69F095BF2F8C825F00477B4F /* BuyerQRCodeView.swift in Sources */,
 				6946CD012F8B218000E9445E /* HomeRoute.swift in Sources */,
 				69F095C72F8C82DF00477B4F /* PurchaseFailureView.swift in Sources */,
@@ -398,16 +435,19 @@
 				69F095AD2F8C4E8A00477B4F /* AuthRootView.swift in Sources */,
 				693B76402F8763490078FCAD /* SmaregiWebView.swift in Sources */,
 				69F095E22F8C864000477B4F /* Row.swift in Sources */,
+				69BA5F2E2F8F62FF00FF3C71 /* APIError.swift in Sources */,
 				69F095C32F8C82A200477B4F /* ScanProductBarcodeView.swift in Sources */,
 				69F095E62F8CABAA00477B4F /* ScanQRCodeView.swift in Sources */,
 				693B763E2F8741760078FCAD /* AuthRouter.swift in Sources */,
 				69F095C52F8C82BE00477B4F /* PurchaseSuccessView.swift in Sources */,
+				69BA5F262F8F5F3C00FF3C71 /* ApiClient.swift in Sources */,
 				693B76362F8740D20078FCAD /* AppRootView.swift in Sources */,
 				69F095BB2F8C822700477B4F /* ProductBarcodeView.swift in Sources */,
 				69F095C12F8C827E00477B4F /* CashRegisterView.swift in Sources */,
 				69F095AF2F8C4ED500477B4F /* HomeRootView.swift in Sources */,
 				693B76382F8740EC0078FCAD /* AppState.swift in Sources */,
 				693B763C2F87416E0078FCAD /* AuthRoute.swift in Sources */,
+				69BA5F2C2F8F60BD00FF3C71 /* AuthService.swift in Sources */,
 				6946CCFD2F8B211400E9445E /* HomeView.swift in Sources */,
 				69F095BD2F8C824900477B4F /* SelectAvailableBalanceView.swift in Sources */,
 				693B76482F8770CB0078FCAD /* LoginView.swift in Sources */,
