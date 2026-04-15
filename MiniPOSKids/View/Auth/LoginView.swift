@@ -3,15 +3,11 @@ import SwiftUI
 struct LoginView: View {
     @Environment(AuthRouter.self) private var router
     @Environment(AppState.self) private var appState
-    @State private var username: String = ""
-    @State private var password: String = ""
-    @State private var isLoggedIn: Bool = false
-    @State private var showError: Bool = false
-    
+
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
-            
+
             // ロゴ / タイトル
             VStack(spacing: 8) {
                 Image(systemName: "cart.fill")
@@ -19,37 +15,12 @@ struct LoginView: View {
                     .scaledToFit()
                     .frame(width: 64, height: 64)
                     .foregroundStyle(.blue)
-                
+
                 Text("レジごっこ")
                     .font(.largeTitle)
                     .fontWeight(.bold)
             }
-            
-            // 入力フォーム
-            VStack(spacing: 16) {
-                TextField("ユーザー名", text: $username)
-                    .onChange(of: username) {
-                        showError = false
-                    }
-                    .textFieldStyle(.roundedBorder)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                
-                SecureField("パスワード", text: $password)
-                    .onChange(of: password) {
-                        showError = false
-                    }
-                    .textFieldStyle(.roundedBorder)
-            }
-            .padding(.horizontal, 32)
-            
-            // エラーメッセージ
-            if showError {
-                Text("ユーザー名またはパスワードが正しくありません")
-                    .foregroundStyle(.red)
-                    .font(.caption)
-            }
-            
+
             // ログインボタン
             Button {
                 handleLogin()
@@ -57,11 +28,10 @@ struct LoginView: View {
                 Text("ログイン")
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(isFormValid ? Color.blue : Color.gray)
+                    .background(Color.blue)
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .disabled(!isFormValid)
             .padding(.horizontal, 32)
             
             // スマレジデベロッパの登録
@@ -80,24 +50,8 @@ struct LoginView: View {
         }
     }
     
-    private var isFormValid: Bool {
-        !username.isEmpty && !password.isEmpty
-    }
-    
     private func handleLogin() {
-        // TODO: Replace with server/API authentication
-#if DEBUG
-        let isAuthenticated = (username == "q" && password == "q")
-#else
-        let isAuthenticated = (username == "q" && password == "q")
-#endif
-        if isAuthenticated {
-            showError = false
-            isLoggedIn = true
-            appState.loginSucceeded()
-        } else {
-            showError = true
-        }
+        appState.loginSucceeded()
     }
     
     private var appHowTo: some View {
