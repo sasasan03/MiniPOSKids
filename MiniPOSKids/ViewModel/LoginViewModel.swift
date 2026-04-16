@@ -90,10 +90,11 @@ final class LoginViewModel {
     }
 
     private func buildAuthURL(codeChallenge: String) -> URL {
+        let clientID = Bundle.main.infoDictionary?["SMAREGI_CLIENT_ID"] as? String ?? ""
         var components = URLComponents(string: "https://id.smaregi.dev/authorize")!
         components.queryItems = [
             URLQueryItem(name: "response_type",          value: "code"),
-            URLQueryItem(name: "client_id",              value: "02658c46faecf5d471d788d26d194897"),
+            URLQueryItem(name: "client_id",              value: clientID),
             URLQueryItem(name: "redirect_uri",           value: "miniposkids://callback"),
             URLQueryItem(name: "scope",                  value: "pos.products:read pos.stores:read"),
             URLQueryItem(name: "code_challenge",         value: codeChallenge),
