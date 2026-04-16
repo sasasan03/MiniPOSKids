@@ -11,7 +11,7 @@ struct AuthRootView: View {
     @State private var router = AuthRouter()
     @State private var authService = AuthService(
         apiClient: APIClient(baseURL: "https://id.smaregi.dev"),
-        tokenStore: TokenStore()
+        tokenStore: KeychainTokenStore()
     )
 
     var body: some View {

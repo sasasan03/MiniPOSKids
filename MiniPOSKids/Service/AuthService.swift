@@ -18,7 +18,6 @@ final class TokenStore: TokenStoreProtocol {
     var accessToken: String?
 }
 
-
 struct TokenResponse: Decodable {
     let accessToken: String
     let tokenType: String

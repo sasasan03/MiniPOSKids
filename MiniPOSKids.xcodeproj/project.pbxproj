@@ -37,6 +37,7 @@
 		69F095E42F8C890200477B4F /* BarcodeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69F095E32F8C890200477B4F /* BarcodeRow.swift */; };
 		69F095E62F8CABAA00477B4F /* ScanQRCodeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69F095E52F8CABAA00477B4F /* ScanQRCodeView.swift */; };
 		69BA5F422F9100AA00FF3C71 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F412F9100AA00FF3C71 /* AppConfig.swift */; };
+		7A32B22901E34872A0AF76F9 /* KeychainTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00BAB3BE878E4CDCA8832ED1 /* KeychainTokenStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -92,6 +93,7 @@
 		69F095E12F8C864000477B4F /* Row.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Row.swift; sourceTree = "<group>"; };
 		69F095E32F8C890200477B4F /* BarcodeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeRow.swift; sourceTree = "<group>"; };
 		69F095E52F8CABAA00477B4F /* ScanQRCodeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScanQRCodeView.swift; sourceTree = "<group>"; };
+		00BAB3BE878E4CDCA8832ED1 /* KeychainTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainTokenStore.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -146,6 +148,7 @@
 				69BA5F242F8F5EB300FF3C71 /* Client */,
 				69BA5F282F8F5FD400FF3C71 /* Service */,
 				69BA5F272F8F5FB500FF3C71 /* Error */,
+				6ED86103FE23405DB1D090EF /* Store */,
 			);
 			path = MiniPOSKids;
 			sourceTree = "<group>";
@@ -284,6 +287,14 @@
 				69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */,
 			);
 			path = Service;
+			sourceTree = "<group>";
+		};
+		6ED86103FE23405DB1D090EF /* Store */ = {
+			isa = PBXGroup;
+			children = (
+				00BAB3BE878E4CDCA8832ED1 /* KeychainTokenStore.swift */,
+			);
+			path = Store;
 			sourceTree = "<group>";
 		};
 		69F095C82F8C84AB00477B4F /* Components */ = {
@@ -466,6 +477,7 @@
 				6946CCFF2F8B217700E9445E /* HomeRouter.swift in Sources */,
 				693B762D2F873FD80078FCAD /* MiniPOSKidsApp.swift in Sources */,
 				69BA5F422F9100AA00FF3C71 /* AppConfig.swift in Sources */,
+				7A32B22901E34872A0AF76F9 /* KeychainTokenStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
