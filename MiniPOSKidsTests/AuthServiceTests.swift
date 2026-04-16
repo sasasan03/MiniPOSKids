@@ -7,54 +7,56 @@ import Testing
 import Foundation
 @testable import MiniPOSKids
 
+// MARK: - URLProtocol Mock
+
+final class MockURLProtocol: URLProtocol {
+    static var requestHandler: ((URLRequest) throws -> (HTTPURLResponse, Data))?
+
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+
+    override func startLoading() {
+        guard let handler = MockURLProtocol.requestHandler else {
+            client?.urlProtocol(self, didFailWithError: URLError(.unknown))
+            return
+        }
+        do {
+            let (response, data) = try handler(request)
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+            client?.urlProtocol(self, didLoad: data)
+            client?.urlProtocolDidFinishLoading(self)
+        } catch {
+            client?.urlProtocol(self, didFailWithError: error)
+        }
+    }
+
+    override func stopLoading() {}
+}
+
+// MARK: - Helpers
+
+private func makeMockSession() -> URLSession {
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [MockURLProtocol.self]
+    return URLSession(configuration: config)
+}
+
+private func makeTokenJSON(accessToken: String = "test-token") -> Data {
+    Data("""
+    {"access_token":"\(accessToken)","token_type":"Bearer","expires_in":3600}
+    """.utf8)
+}
+
 // MARK: - Mocks
 
 final class MockAPIClient: APIClientProtocol {
-    // send(path:method:body:headers:) の呼び出し記録
-    var capturedPath: String?
-    var capturedMethod: HTTPMethod?
-    var capturedHeaders: [String: String]?
-
-    // 返す値またはスローするエラーを外から注入する
-    var stubbedResult: (any Decodable)?
-    var stubbedError: Error?
-
     func send<RequestBody: Encodable, ResponseBody: Decodable>(
-        path: String,
-        method: HTTPMethod,
-        body: RequestBody?,
-        headers: [String: String]
-    ) async throws -> ResponseBody {
-        capturedPath = path
-        capturedMethod = method
-        capturedHeaders = headers
-
-        if let error = stubbedError {
-            throw error
-        }
-        guard let result = stubbedResult as? ResponseBody else {
-            fatalError("stubbedResult の型が ResponseBody と一致しません")
-        }
-        return result
-    }
+        path: String, method: HTTPMethod, body: RequestBody?, headers: [String: String]
+    ) async throws -> ResponseBody { fatalError("not used in AuthService") }
 
     func send<ResponseBody: Decodable>(
-        path: String,
-        method: HTTPMethod,
-        headers: [String: String]
-    ) async throws -> ResponseBody {
-        capturedPath = path
-        capturedMethod = method
-        capturedHeaders = headers
-
-        if let error = stubbedError {
-            throw error
-        }
-        guard let result = stubbedResult as? ResponseBody else {
-            fatalError("stubbedResult の型が ResponseBody と一致しません")
-        }
-        return result
-    }
+        path: String, method: HTTPMethod, headers: [String: String]
+    ) async throws -> ResponseBody { fatalError("not used in AuthService") }
 }
 
 final class MockTokenStore: TokenStoreProtocol {
@@ -65,85 +67,106 @@ final class MockTokenStore: TokenStoreProtocol {
 
 struct AuthServiceTests {
 
-    // MARK: login 成功
-
-    @Test func login_success_returnsLoginResponse() async throws {
-        let mockClient = MockAPIClient()
-        let mockStore = MockTokenStore()
-        let expected = LoginResponse(accessToken: "test-token-abc", userId: 42)
-        mockClient.stubbedResult = expected
-
-        let sut = await AuthService(apiClient: mockClient, tokenStore: mockStore)
-        let response = try await sut.login(email: "user@example.com", password: "pass1234")
-
-        #expect(response.accessToken == expected.accessToken)
-        #expect(response.userId == expected.userId)
+    private func makeSUT() -> (sut: AuthService, store: MockTokenStore) {
+        let store = MockTokenStore()
+        let sut = AuthService(apiClient: MockAPIClient(), tokenStore: store, session: makeMockSession())
+        return (sut, store)
     }
 
-    @Test func login_success_storesAccessTokenInTokenStore() async throws {
-        let mockClient = MockAPIClient()
-        let mockStore = MockTokenStore()
-        mockClient.stubbedResult = LoginResponse(accessToken: "stored-token", userId: 1)
+    // MARK: 成功
 
-        let sut = await AuthService(apiClient: mockClient, tokenStore: mockStore)
-        _ = try await sut.login(email: "user@example.com", password: "pass1234")
+    @Test func exchangeToken_success_returnsTokenResponse() async throws {
+        MockURLProtocol.requestHandler = { _ in
+            let res = HTTPURLResponse(url: URL(string: "https://id.smaregi.dev")!,
+                                      statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (res, makeTokenJSON(accessToken: "abc123"))
+        }
+        let (sut, _) = makeSUT()
+        let result = try await sut.exchangeToken(code: "auth-code", codeVerifier: "verifier")
 
-        #expect(mockStore.accessToken == "stored-token")
+        #expect(result.accessToken == "abc123")
+        #expect(result.tokenType == "Bearer")
+        #expect(result.expiresIn == 3600)
     }
 
-    @Test func login_success_callsCorrectEndpoint() async throws {
-        let mockClient = MockAPIClient()
-        let mockStore = MockTokenStore()
-        mockClient.stubbedResult = LoginResponse(accessToken: "token", userId: 1)
+    @Test func exchangeToken_success_storesAccessToken() async throws {
+        MockURLProtocol.requestHandler = { _ in
+            let res = HTTPURLResponse(url: URL(string: "https://id.smaregi.dev")!,
+                                      statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (res, makeTokenJSON(accessToken: "stored-token"))
+        }
+        let (sut, store) = makeSUT()
+        _ = try await sut.exchangeToken(code: "auth-code", codeVerifier: "verifier")
 
-        let sut = await AuthService(apiClient: mockClient, tokenStore: mockStore)
-        _ = try await sut.login(email: "user@example.com", password: "pass1234")
-
-        #expect(mockClient.capturedPath == "/auth/login")
-        #expect(mockClient.capturedMethod == .post)
+        #expect(store.accessToken == "stored-token")
     }
 
-    // MARK: login 失敗
+    @Test func exchangeToken_success_sendsCorrectRequest() async throws {
+        var captured: URLRequest?
+        MockURLProtocol.requestHandler = { request in
+            captured = request
+            let res = HTTPURLResponse(url: URL(string: "https://id.smaregi.dev")!,
+                                      statusCode: 200, httpVersion: nil, headerFields: nil)!
+            return (res, makeTokenJSON())
+        }
+        let (sut, _) = makeSUT()
+        _ = try await sut.exchangeToken(code: "my-code", codeVerifier: "my-verifier")
 
-    @Test func login_failure_propagatesNetworkError() async {
-        let mockClient = MockAPIClient()
-        let mockStore = MockTokenStore()
-        mockClient.stubbedError = APIError.networkError(URLError(.notConnectedToInternet))
+        let body = captured.flatMap(\.httpBody).flatMap { String(data: $0, encoding: .utf8) } ?? ""
+        #expect(captured?.httpMethod == "POST")
+        #expect(captured?.value(forHTTPHeaderField: "Content-Type") == "application/x-www-form-urlencoded")
+        #expect(body.contains("code=my-code"))
+        #expect(body.contains("code_verifier=my-verifier"))
+        #expect(body.contains("grant_type=authorization_code"))
+        #expect(body.contains("redirect_uri=miniposkids"))
+    }
 
-        let sut = await AuthService(apiClient: mockClient, tokenStore: mockStore)
+    // MARK: 失敗
+
+    @Test func exchangeToken_failure_statusCode401_throwsStatusCodeError() async throws {
+        MockURLProtocol.requestHandler = { _ in
+            let res = HTTPURLResponse(url: URL(string: "https://id.smaregi.dev")!,
+                                      statusCode: 401, httpVersion: nil, headerFields: nil)!
+            return (res, Data())
+        }
+        let (sut, _) = makeSUT()
 
         do {
-            _ = try await sut.login(email: "user@example.com", password: "pass1234")
+            _ = try await sut.exchangeToken(code: "code", codeVerifier: "verifier")
             Issue.record("エラーがスローされるべきでした")
-        } catch {
-            #expect(error is APIError)
+        } catch let error as APIError {
+            guard case .statusCode(let code, _) = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+            #expect(code == 401)
         }
     }
 
-    @Test func login_failure_propagatesStatusCodeError() async {
-        let mockClient = MockAPIClient()
-        let mockStore = MockTokenStore()
-        mockClient.stubbedError = APIError.statusCode(401, Data())
-
-        let sut = await AuthService(apiClient: mockClient, tokenStore: mockStore)
+    @Test func exchangeToken_failure_networkError_throwsNetworkError() async throws {
+        MockURLProtocol.requestHandler = { _ in
+            throw URLError(.notConnectedToInternet)
+        }
+        let (sut, _) = makeSUT()
 
         do {
-            _ = try await sut.login(email: "user@example.com", password: "pass1234")
+            _ = try await sut.exchangeToken(code: "code", codeVerifier: "verifier")
             Issue.record("エラーがスローされるべきでした")
-        } catch {
-            #expect(error is APIError)
+        } catch let error as APIError {
+            guard case .networkError = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
         }
     }
 
-    @Test func login_failure_doesNotStoreTokenOnError() async {
-        let mockClient = MockAPIClient()
-        let mockStore = MockTokenStore()
-        mockClient.stubbedError = APIError.statusCode(401, Data())
+    @Test func exchangeToken_failure_doesNotStoreTokenOnError() async throws {
+        MockURLProtocol.requestHandler = { _ in
+            let res = HTTPURLResponse(url: URL(string: "https://id.smaregi.dev")!,
+                                      statusCode: 500, httpVersion: nil, headerFields: nil)!
+            return (res, Data())
+        }
+        let (sut, store) = makeSUT()
+        _ = try? await sut.exchangeToken(code: "code", codeVerifier: "verifier")
 
-        let sut = await AuthService(apiClient: mockClient, tokenStore: mockStore)
-
-        _ = try? await sut.login(email: "user@example.com", password: "pass1234")
-
-        #expect(mockStore.accessToken == nil)
+        #expect(store.accessToken == nil)
     }
 }
