@@ -20,8 +20,22 @@ final class MockURLProtocol: URLProtocol {
             client?.urlProtocol(self, didFailWithError: URLError(.unknown))
             return
         }
+        // URLSession は httpBody を httpBodyStream に変換して渡すため、元に戻す
+        var resolved = request
+        if let stream = request.httpBodyStream {
+            var data = Data()
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: 4096)
+            stream.open()
+            while stream.hasBytesAvailable {
+                let count = stream.read(buffer, maxLength: 4096)
+                if count > 0 { data.append(buffer, count: count) }
+            }
+            stream.close()
+            buffer.deallocate()
+            resolved.httpBody = data
+        }
         do {
-            let (response, data) = try handler(request)
+            let (response, data) = try handler(resolved)
             client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
             client?.urlProtocol(self, didLoad: data)
             client?.urlProtocolDidFinishLoading(self)
@@ -65,6 +79,7 @@ final class MockTokenStore: TokenStoreProtocol {
 
 // MARK: - Tests
 
+@Suite(.serialized)
 struct AuthServiceTests {
 
     private func makeSUT() -> (sut: AuthService, store: MockTokenStore) {
