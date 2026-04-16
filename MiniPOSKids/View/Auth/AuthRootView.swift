@@ -22,14 +22,13 @@ struct AuthRootView: View {
                 }
         }
         .environment(router)
-        .environment(authService)
     }
     
     @ViewBuilder
     private func makeView(route: AuthRoute) -> some View {
         switch route {
         case .login:
-            LoginView()
+            LoginView(authService: authService)
         case .web:
             SmaregiWebView()
                 .navigationTitle("スマレジデベロッパー")

@@ -8,8 +8,11 @@ import SwiftUI
 struct LoginView: View {
     @Environment(AuthRouter.self) private var router
     @Environment(AppState.self) private var appState
-    @Environment(AuthService.self) private var authService
-    @State private var viewModel = LoginViewModel()
+    @State private var viewModel: LoginViewModel
+
+    init(authService: AuthService) {
+        _viewModel = State(initialValue: LoginViewModel(authService: authService))
+    }
 
     var body: some View {
         VStack(spacing: 24) {
@@ -38,7 +41,7 @@ struct LoginView: View {
 
             // ログインボタン
             Button {
-                viewModel.login(authService: authService, onSuccess: appState.loginSucceeded)
+                viewModel.login(onSuccess: appState.loginSucceeded)
             } label: {
                 Text("スマレジでログイン")
                     .frame(maxWidth: .infinity)
@@ -102,9 +105,13 @@ struct LoginView: View {
 private struct PreviewContainer: View {
     @State private var router = AuthRouter()
     @State private var appState = AppState()
+    @State private var authService = AuthService(
+        apiClient: APIClient(baseURL: "https://id.smaregi.dev"),
+        tokenStore: TokenStore()
+    )
 
     var body: some View {
-        LoginView()
+        LoginView(authService: authService)
             .environment(router)
             .environment(appState)
     }

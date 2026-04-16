@@ -42,31 +42,21 @@ protocol AuthServiceProtocol {
 final class AuthService: AuthServiceProtocol {
     private let apiClient: APIClientProtocol
     private var tokenStore: TokenStoreProtocol
-    private let session: URLSession
-    private let decoder: JSONDecoder
 
     private static var clientId: String { AppConfig.smaregiClientId }
     private static let redirectUri = "miniposkids://callback"
-    private static let tokenEndpoint = URL(string: "https://id.smaregi.dev/authorize/token")!
 
     init(
         apiClient: APIClientProtocol,
-        tokenStore: TokenStoreProtocol,
-        session: URLSession = .shared
+        tokenStore: TokenStoreProtocol
     ) {
         self.apiClient = apiClient
         self.tokenStore = tokenStore
-        self.session = session
-        self.decoder = JSONDecoder()
     }
 
     // MARK: PKCEトークン交換
 
     func exchangeToken(code: String, codeVerifier: String) async throws -> TokenResponse {
-        var request = URLRequest(url: Self.tokenEndpoint)
-        request.httpMethod = "POST"
-        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-
         let params: [String: String] = [
             "grant_type":    "authorization_code",
             "code":          code,
@@ -74,34 +64,13 @@ final class AuthService: AuthServiceProtocol {
             "client_id":     Self.clientId,
             "code_verifier": codeVerifier,
         ]
-        request.httpBody = params
-            .map { key, value in
-                let encodedValue = value.addingPercentEncoding(
-                    withAllowedCharacters: .urlQueryAllowed
-                ) ?? value
-                return "\(key)=\(encodedValue)"
-            }
-            .sorted()
-            .joined(separator: "&")
-            .data(using: .utf8)
-
-        do {
-            let (data, response) = try await session.data(for: request)
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw APIError.invalidResponse
-            }
-            guard 200...299 ~= httpResponse.statusCode else {
-                throw APIError.statusCode(httpResponse.statusCode, data)
-            }
-
-            let tokenResponse = try decoder.decode(TokenResponse.self, from: data)
-            tokenStore.accessToken = tokenResponse.accessToken
-            return tokenResponse
-        } catch let error as APIError {
-            throw error
-        } catch {
-            throw APIError.networkError(error)
-        }
+        let tokenResponse: TokenResponse = try await apiClient.sendForm(
+            path: "/authorize/token",
+            method: .post,
+            formParams: params,
+            headers: [:]
+        )
+        tokenStore.accessToken = tokenResponse.accessToken
+        return tokenResponse
     }
 }

@@ -13,10 +13,12 @@ import Observation
 // ASWebAuthenticationSession が Safari を表示するために必要なアンカー提供クラス
 private final class PresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        UIApplication.shared.connectedScenes
-            .compactMap { $0 as? UIWindowScene }
-            .first?
-            .keyWindow ?? ASPresentationAnchor()
+        let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }
+        return scenes
+            .first { $0.activationState == .foregroundActive }?
+            .windows.first(where: { $0.isKeyWindow })
+            ?? scenes.flatMap { $0.windows }.first(where: { $0.isKeyWindow })
+            ?? scenes.flatMap { $0.windows }.first!
     }
 }
 
@@ -24,12 +26,17 @@ private final class PresentationContext: NSObject, ASWebAuthenticationPresentati
 final class LoginViewModel {
     var errorMessage: String?
 
+    private let authService: AuthServiceProtocol
     private var webAuthSession: ASWebAuthenticationSession?
     private let presentationContext = PresentationContext()
 
+    init(authService: AuthServiceProtocol) {
+        self.authService = authService
+    }
+
     // MARK: - Login
 
-    func login(authService: AuthService, onSuccess: @escaping () -> Void) {
+    func login(onSuccess: @escaping () -> Void) {
         let codeVerifier  = generateCodeVerifier()
         let codeChallenge = generateCodeChallenge(from: codeVerifier)
 
@@ -56,10 +63,12 @@ final class LoginViewModel {
             }
             Task {
                 do {
-                    _ = try await authService.exchangeToken(code: code, codeVerifier: codeVerifier)
-                    onSuccess()
+                    _ = try await self.authService.exchangeToken(code: code, codeVerifier: codeVerifier)
+                    await MainActor.run { onSuccess() }
                 } catch {
-                    self.errorMessage = "トークン取得に失敗しました: \(error.localizedDescription)"
+                    await MainActor.run {
+                        self.errorMessage = "トークン取得に失敗しました: \(error.localizedDescription)"
+                    }
                 }
             }
         }
@@ -90,11 +99,10 @@ final class LoginViewModel {
     }
 
     private func buildAuthURL(codeChallenge: String) -> URL {
-        let clientID = Bundle.main.infoDictionary?["SMAREGI_CLIENT_ID"] as? String ?? ""
         var components = URLComponents(string: "https://id.smaregi.dev/authorize")!
         components.queryItems = [
             URLQueryItem(name: "response_type",          value: "code"),
-            URLQueryItem(name: "client_id",              value: clientID),
+            URLQueryItem(name: "client_id",              value: AppConfig.smaregiClientId),
             URLQueryItem(name: "redirect_uri",           value: "miniposkids://callback"),
             URLQueryItem(name: "scope",                  value: "pos.products:read pos.stores:read"),
             URLQueryItem(name: "code_challenge",         value: codeChallenge),
@@ -103,4 +111,3 @@ final class LoginViewModel {
         return components.url!
     }
 }
-

@@ -28,6 +28,13 @@ protocol APIClientProtocol {
         method: HTTPMethod,
         headers: [String: String]
     ) async throws -> ResponseBody
+
+    func sendForm<ResponseBody: Decodable>(
+        path: String,
+        method: HTTPMethod,
+        formParams: [String: String],
+        headers: [String: String]
+    ) async throws -> ResponseBody
 }
 
 final class APIClient: APIClientProtocol {
@@ -72,7 +79,9 @@ final class APIClient: APIClientProtocol {
         body: RequestBody?,
         headers: [String: String] = [:]
     ) async throws -> ResponseBody {
-        guard let url = URL(string: baseURL + path) else {
+        let normalizedBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
+        let normalizedPath = path.hasPrefix("/") ? path : "/\(path)"
+        guard let url = URL(string: normalizedBase + normalizedPath) else {
             throw APIError.invalidURL
         }
 
@@ -124,9 +133,61 @@ final class APIClient: APIClientProtocol {
             throw APIError.networkError(error)
         }
     }
+
+    /// フォームエンコードされたPOSTリクエスト送信（OAuth トークン交換など）
+    func sendForm<ResponseBody: Decodable>(
+        path: String,
+        method: HTTPMethod,
+        formParams: [String: String],
+        headers: [String: String] = [:]
+    ) async throws -> ResponseBody {
+        let normalizedBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
+        let normalizedPath = path.hasPrefix("/") ? path : "/\(path)"
+        guard let url = URL(string: normalizedBase + normalizedPath) else {
+            throw APIError.invalidURL
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = method.rawValue
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        headers.forEach { key, value in
+            request.setValue(value, forHTTPHeaderField: key)
+        }
+
+        request.httpBody = formParams
+            .map { key, value in
+                let encodedValue = value.addingPercentEncoding(
+                    withAllowedCharacters: .urlQueryAllowed
+                ) ?? value
+                return "\(key)=\(encodedValue)"
+            }
+            .sorted()
+            .joined(separator: "&")
+            .data(using: .utf8)
+
+        do {
+            let (data, response) = try await session.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.invalidResponse
+            }
+            guard 200...299 ~= httpResponse.statusCode else {
+                throw APIError.statusCode(httpResponse.statusCode, data)
+            }
+
+            do {
+                return try decoder.decode(ResponseBody.self, from: data)
+            } catch {
+                throw APIError.decodingFailed(error)
+            }
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError.networkError(error)
+        }
+    }
 }
 
 /// 削除やログアウトなど、レスポンスボディを返さないAPI向けの型
-struct EmptyResponse: Decodable {
-    init() {}
-}
+struct EmptyResponse: Decodable {}
