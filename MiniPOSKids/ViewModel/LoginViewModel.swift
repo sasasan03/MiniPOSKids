@@ -94,7 +94,11 @@ final class LoginViewModel {
         session.presentationContextProvider = presentationContext
         session.prefersEphemeralWebBrowserSession = false
         webAuthSession = session
-        session.start()
+        guard session.start() else {
+            webAuthSession = nil
+            errorMessage = "認証セッションを開始できませんでした"
+            return
+        }
     }
 
     // MARK: - PKCE / State
