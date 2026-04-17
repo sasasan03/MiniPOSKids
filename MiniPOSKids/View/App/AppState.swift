@@ -10,7 +10,7 @@ import SwiftUI
 @Observable
 final class AppState {
     var session: Session
-    private let tokenStore: TokenStoreProtocol
+    let tokenStore: TokenStoreProtocol
 
     enum Session {
         case unauthenticated

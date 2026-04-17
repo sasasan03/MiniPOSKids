@@ -8,11 +8,18 @@
 import SwiftUI
 
 struct AuthRootView: View {
+    @Environment(AppState.self) private var appState
     @State private var router = AuthRouter()
-    @State private var authService = AuthService(
-        apiClient: APIClient(baseURL: "https://id.smaregi.dev"),
-        tokenStore: KeychainTokenStore()
-    )
+    @State private var authService: AuthService
+    init(tokenStore: TokenStoreProtocol) {
+        _authService = State(initialValue: AuthService(
+            apiClient: APIClient(
+                baseURL: "https://id.smaregi.dev",
+                tokenStore: tokenStore
+            ),
+            tokenStore: tokenStore)
+        )
+    }
 
     var body: some View {
         NavigationStack(path: $router.path) {
@@ -41,10 +48,17 @@ struct AuthRootView: View {
 }
 
 private struct PreviewContainer: View {
-    @State private var appState = AppState()
-    
+    private let tokenStore: TokenStore
+    @State private var appState: AppState
+
+    init() {
+        let store = TokenStore()
+        tokenStore = store
+        _appState = State(initialValue: AppState(tokenStore: store))
+    }
+
     var body: some View {
-        AuthRootView()
+        AuthRootView(tokenStore: tokenStore)
             .environment(appState)
     }
 }

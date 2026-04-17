@@ -105,10 +105,13 @@ struct LoginView: View {
 private struct PreviewContainer: View {
     @State private var router = AuthRouter()
     @State private var appState = AppState()
-    @State private var authService = AuthService(
-        apiClient: APIClient(baseURL: "https://id.smaregi.dev"),
-        tokenStore: TokenStore()
-    )
+    @State private var authService: AuthService = {
+        let store = TokenStore()
+        return AuthService(
+            apiClient: APIClient(baseURL: "https://id.smaregi.dev", tokenStore: store),
+            tokenStore: store
+        )
+    }()
 
     var body: some View {
         LoginView(authService: authService)

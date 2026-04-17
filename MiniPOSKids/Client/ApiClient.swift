@@ -53,7 +53,7 @@ final class APIClient: APIClientProtocol {
     init(
         baseURL: String,
         session: URLSession = .shared,
-        tokenStore: TokenStoreProtocol = TokenStore(),
+        tokenStore: TokenStoreProtocol,
         encoder: JSONEncoder = JSONEncoder(),
         decoder: JSONDecoder = JSONDecoder()
     ) {
