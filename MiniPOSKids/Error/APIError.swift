@@ -14,6 +14,8 @@ enum APIError: Error, LocalizedError {
     case encodingFailed
     case decodingFailed(Error)
     case networkError(Error)
+    /// アクセストークンもリフレッシュトークンも失効している
+    case sessionExpired
 
     var errorDescription: String? {
         switch self {
@@ -29,6 +31,8 @@ enum APIError: Error, LocalizedError {
             return "レスポンスのデコードに失敗しました: \(error.localizedDescription)"
         case .networkError(let error):
             return "通信エラー: \(error.localizedDescription)"
+        case .sessionExpired:
+            return "セッションの有効期限が切れました。再度ログインしてください。"
         }
     }
 }

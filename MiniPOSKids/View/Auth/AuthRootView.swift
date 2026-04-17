@@ -12,13 +12,10 @@ struct AuthRootView: View {
     @State private var router = AuthRouter()
     @State private var authService: AuthService
     init(tokenStore: TokenStoreProtocol) {
-        _authService = State(initialValue: AuthService(
-            apiClient: APIClient(
-                baseURL: "https://id.smaregi.dev",
-                tokenStore: tokenStore
-            ),
-            tokenStore: tokenStore)
-        )
+        let apiClient = APIClient(baseURL: "https://id.smaregi.dev", tokenStore: tokenStore)
+        let authService = AuthService(apiClient: apiClient, tokenStore: tokenStore)
+        apiClient.tokenRefresher = authService
+        _authService = State(initialValue: authService)
     }
 
     var body: some View {

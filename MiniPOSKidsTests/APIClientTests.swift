@@ -48,6 +48,20 @@ private final class MockURLProtocol: URLProtocol {
     override func stopLoading() {}
 }
 
+// MARK: - Mocks
+
+private final class MockTokenRefresher: TokenRefresherProtocol {
+    var refreshCalled = false
+    var refreshError: Error?
+    var onRefresh: (() -> Void)?
+
+    func refreshAccessToken() async throws {
+        refreshCalled = true
+        onRefresh?()
+        if let error = refreshError { throw error }
+    }
+}
+
 // MARK: - Helpers
 
 private struct Item: Codable, Equatable {
@@ -130,7 +144,8 @@ struct APIClientTests {
 
     @Test func send_throwsInvalidURL_whenBaseURLIsMalformed() async throws {
         do {
-            let _: Item = try await makeSUT(baseURL: "not a valid url")
+            // "http://[invalid" は URL(string:) が nil を返す形式
+            let _: Item = try await makeSUT(baseURL: "http://[invalid")
                 .send(path: "/items", method: .get, headers: [:])
             Issue.record("エラーがスローされるべきでした")
         } catch let error as APIError {
@@ -409,6 +424,78 @@ struct APIClientTests {
             guard case .networkError = error else {
                 Issue.record("想定外のAPIErrorケース: \(error)"); return
             }
+        }
+    }
+
+    // MARK: send - 401 自動リフレッシュ
+
+    @Test func send_on401_withTokenRefresher_retriesOnce() async throws {
+        var callCount = 0
+        let refresher = MockTokenRefresher()
+        refresher.onRefresh = {
+            MockURLProtocol.requestHandler = { _ in (makeResponse(), makeItemJSON(id: 1, name: "retried")) }
+        }
+        MockURLProtocol.requestHandler = { _ in
+            callCount += 1
+            return (makeResponse(statusCode: 401), Data())
+        }
+
+        let sut = makeSUT()
+        sut.tokenRefresher = refresher
+        let item: Item = try await sut.send(path: "/items", method: .get, headers: [:])
+
+        #expect(refresher.refreshCalled)
+        #expect(item.name == "retried")
+    }
+
+    @Test func send_on401_withTokenRefresher_throwsSessionExpired_whenRefreshFails() async throws {
+        MockURLProtocol.requestHandler = { _ in (makeResponse(statusCode: 401), Data()) }
+        let refresher = MockTokenRefresher()
+        refresher.refreshError = APIError.sessionExpired
+
+        let sut = makeSUT()
+        sut.tokenRefresher = refresher
+
+        do {
+            let _: Item = try await sut.send(path: "/items", method: .get, headers: [:])
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .sessionExpired = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
+    }
+
+    @Test func send_on401_withoutTokenRefresher_throwsStatusCodeError() async throws {
+        MockURLProtocol.requestHandler = { _ in (makeResponse(statusCode: 401), Data()) }
+
+        do {
+            let _: Item = try await makeSUT().send(path: "/items", method: .get, headers: [:])
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .statusCode(let code, _) = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+            #expect(code == 401)
+        }
+    }
+
+    @Test func send_on401_doesNotRetryMoreThanOnce() async throws {
+        var callCount = 0
+        MockURLProtocol.requestHandler = { _ in
+            callCount += 1
+            return (makeResponse(statusCode: 401), Data())
+        }
+        let refresher = MockTokenRefresher()
+
+        let sut = makeSUT()
+        sut.tokenRefresher = refresher
+
+        do {
+            let _: Item = try await sut.send(path: "/items", method: .get, headers: [:])
+            Issue.record("エラーがスローされるべきでした")
+        } catch {
+            #expect(callCount == 2)
         }
     }
 }

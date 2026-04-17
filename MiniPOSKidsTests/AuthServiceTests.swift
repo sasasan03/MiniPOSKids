@@ -35,23 +35,29 @@ final class MockAPIClient: APIClientProtocol {
 
 final class MockTokenStore: TokenStoreProtocol {
     var accessToken: String?
+    var refreshToken: String?
     var savedExpiresIn: Int?
 
-    func save(accessToken: String, expiresIn: Int) {
+    func save(accessToken: String, expiresIn: Int, refreshToken: String?) {
         self.accessToken = accessToken
         self.savedExpiresIn = expiresIn
+        self.refreshToken = refreshToken
     }
 
     func deleteToken() {
         accessToken = nil
+        refreshToken = nil
         savedExpiresIn = nil
     }
 }
 
 // MARK: - Helpers
 
-private func makeTokenResponse(accessToken: String = "test-token") -> TokenResponse {
-    TokenResponse(accessToken: accessToken, tokenType: "Bearer", expiresIn: 3600)
+private func makeTokenResponse(
+    accessToken: String = "test-token",
+    refreshToken: String? = "test-refresh-token"
+) -> TokenResponse {
+    TokenResponse(accessToken: accessToken, tokenType: "Bearer", expiresIn: 3600, refreshToken: refreshToken)
 }
 
 // MARK: - Tests
@@ -66,7 +72,7 @@ struct AuthServiceTests {
         return (sut, client, store)
     }
 
-    // MARK: 成功
+    // MARK: exchangeToken - 成功
 
     @Test func exchangeToken_success_returnsTokenResponse() async throws {
         let (sut, client, _) = makeSUT()
@@ -79,14 +85,15 @@ struct AuthServiceTests {
         #expect(result.expiresIn == 3600)
     }
 
-    @Test func exchangeToken_success_storesAccessToken() async throws {
+    @Test func exchangeToken_success_storesAccessAndRefreshToken() async throws {
         let (sut, client, store) = makeSUT()
-        client.sendFormResponse = makeTokenResponse(accessToken: "stored-token")
+        client.sendFormResponse = makeTokenResponse(accessToken: "stored-token", refreshToken: "stored-refresh")
 
         _ = try await sut.exchangeToken(code: "auth-code", codeVerifier: "verifier")
 
         #expect(store.accessToken == "stored-token")
         #expect(store.savedExpiresIn == 3600)
+        #expect(store.refreshToken == "stored-refresh")
     }
 
     @Test func exchangeToken_success_sendsCorrectParams() async throws {
@@ -102,7 +109,7 @@ struct AuthServiceTests {
         #expect(client.capturedFormPath == "/authorize/token")
     }
 
-    // MARK: 失敗
+    // MARK: exchangeToken - 失敗
 
     @Test func exchangeToken_failure_statusCode401_throwsStatusCodeError() async throws {
         let (sut, client, _) = makeSUT()
@@ -140,5 +147,92 @@ struct AuthServiceTests {
         _ = try? await sut.exchangeToken(code: "code", codeVerifier: "verifier")
 
         #expect(store.accessToken == nil)
+        #expect(store.refreshToken == nil)
+    }
+
+    // MARK: refreshAccessToken - 成功
+
+    @Test func refreshAccessToken_success_storesNewTokens() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "existing-refresh"
+        client.sendFormResponse = makeTokenResponse(accessToken: "new-access", refreshToken: "new-refresh")
+
+        try await sut.refreshAccessToken()
+
+        #expect(store.accessToken == "new-access")
+        #expect(store.refreshToken == "new-refresh")
+    }
+
+    @Test func refreshAccessToken_success_sendsCorrectParams() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "my-refresh-token"
+        client.sendFormResponse = makeTokenResponse()
+
+        try await sut.refreshAccessToken()
+
+        #expect(client.capturedFormParams["grant_type"] == "refresh_token")
+        #expect(client.capturedFormParams["refresh_token"] == "my-refresh-token")
+        #expect(client.capturedFormPath == "/authorize/token")
+    }
+
+    @Test func refreshAccessToken_keepsExistingRefreshToken_whenServerDoesNotReturnNewOne() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "original-refresh"
+        client.sendFormResponse = makeTokenResponse(accessToken: "new-access", refreshToken: nil)
+
+        try await sut.refreshAccessToken()
+
+        #expect(store.refreshToken == "original-refresh")
+    }
+
+    // MARK: refreshAccessToken - 失敗
+
+    @Test func refreshAccessToken_noRefreshToken_throwsSessionExpired() async throws {
+        let (sut, _, _) = makeSUT()
+
+        do {
+            try await sut.refreshAccessToken()
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .sessionExpired = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
+    }
+
+    @Test func refreshAccessToken_serverReturns401_throwsSessionExpired_andDeletesTokens() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "expired-refresh"
+        store.accessToken = "expired-access"
+        client.sendFormError = APIError.statusCode(401, Data())
+
+        do {
+            try await sut.refreshAccessToken()
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .sessionExpired = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
+
+        #expect(store.accessToken == nil)
+        #expect(store.refreshToken == nil)
+    }
+
+    @Test func refreshAccessToken_serverReturns400_throwsSessionExpired_andDeletesTokens() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "expired-refresh"
+        client.sendFormError = APIError.statusCode(400, Data())
+
+        do {
+            try await sut.refreshAccessToken()
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .sessionExpired = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
+
+        #expect(store.refreshToken == nil)
     }
 }

@@ -15,19 +15,34 @@ final class KeychainTokenStore: TokenStoreProtocol {
     private struct Payload: Codable {
         let accessToken: String
         let expiryDate: Date
+        let refreshToken: String?
     }
-    
-    var accessToken: String? { read() }
 
-    func save(accessToken: String, expiresIn: Int) {
-        save(accessToken, expiresIn: expiresIn)
+    var accessToken: String? {
+        guard let payload = readPayload() else { return nil }
+        guard Date() < payload.expiryDate else {
+            logger.info("read: トークンの有効期限切れ (expiry=\(payload.expiryDate))")
+            return nil
+        }
+        logger.info("read: アクセストークンを取得しました (expiry=\(payload.expiryDate))")
+        return payload.accessToken
+    }
+
+    var refreshToken: String? {
+        readPayload()?.refreshToken
+    }
+
+    func save(accessToken: String, expiresIn: Int, refreshToken: String?) {
+        save(accessToken, expiresIn: expiresIn, refreshToken: refreshToken)
     }
 
     func deleteToken() {
         delete()
     }
-    
-    private func read() -> String? {
+
+    // MARK: - Private
+
+    private func readPayload() -> Payload? {
         let query: [CFString: Any] = [
             kSecClass:       kSecClassGenericPassword,
             kSecAttrService: service,
@@ -40,51 +55,45 @@ final class KeychainTokenStore: TokenStoreProtocol {
 
         switch status {
         case errSecItemNotFound:
-            logger.info("read: トークンが存在しません")
+            logger.info("readPayload: トークンが存在しません")
             return nil
         case let s where s != errSecSuccess:
-            logger.error("read: Keychain の読み取りに失敗しました (status=\(s))")
+            logger.error("readPayload: Keychain の読み取りに失敗しました (status=\(s))")
             return nil
         default:
             break
         }
 
         guard let data = result as? Data else {
-            logger.error("read: データの取得に失敗しました")
+            logger.error("readPayload: データの取得に失敗しました")
             return nil
         }
 
         do {
-            let payload = try JSONDecoder().decode(Payload.self, from: data)
-            guard Date() < payload.expiryDate else {
-                logger.info("read: トークンの有効期限切れ (expiry=\(payload.expiryDate))")
-                return nil
-            }
-            logger.info("read: トークンを取得しました (expiry=\(payload.expiryDate))")
-            return payload.accessToken
+            return try JSONDecoder().decode(Payload.self, from: data)
         } catch {
-            logger.error("read: デコードに失敗しました (error=\(error))")
+            logger.error("readPayload: デコードに失敗しました (error=\(error))")
             return nil
         }
     }
 
-    private func save(_ token: String, expiresIn: Int) {
+    private func save(_ token: String, expiresIn: Int, refreshToken: String?) {
         guard expiresIn > 0 else {
             logger.error("save: 不正な expiresIn を検出しました (expiresIn=\(expiresIn))")
             delete()
             return
         }
         let expiryDate = Date().addingTimeInterval(TimeInterval(expiresIn))
-        let payload = Payload(accessToken: token, expiryDate: expiryDate)
+        let payload = Payload(accessToken: token, expiryDate: expiryDate, refreshToken: refreshToken)
         do {
             let data = try JSONEncoder().encode(payload)
             let query: [CFString: Any] = [
-                kSecClass:            kSecClassGenericPassword,
-                kSecAttrService:      service,
-                kSecAttrAccount:      account,
+                kSecClass:       kSecClassGenericPassword,
+                kSecAttrService: service,
+                kSecAttrAccount: account,
             ]
             let updateAttrs: [CFString: Any] = [
-                kSecValueData: data,
+                kSecValueData:      data,
                 kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
             ]
             let updateStatus = SecItemUpdate(query as CFDictionary, updateAttrs as CFDictionary)
@@ -107,7 +116,6 @@ final class KeychainTokenStore: TokenStoreProtocol {
             logger.error("save: Keychain 更新に失敗しました (status=\(updateStatus))")
         } catch {
             logger.error("save: エンコードに失敗しました (error=\(error))")
-            return
         }
     }
 
