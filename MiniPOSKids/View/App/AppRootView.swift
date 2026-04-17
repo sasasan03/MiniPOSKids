@@ -13,7 +13,7 @@ struct AppRootView: View {
     var body: some View {
         Group {
             if appState.session == .unauthenticated {
-                AuthRootView()
+                AuthRootView(tokenStore: appState.tokenStore)
             } else if appState.session == .authenticated {
                 HomeRootView()
             } else {

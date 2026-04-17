@@ -41,6 +41,7 @@ fastlane/test_output
 .env.*
 Secrets.swift
 Secrets.plist
+Secrets.xcconfig
 
 # macOS
 .DS_Store
