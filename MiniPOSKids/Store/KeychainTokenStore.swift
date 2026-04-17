@@ -69,24 +69,42 @@ final class KeychainTokenStore: TokenStoreProtocol {
     }
 
     private func save(_ token: String, expiresIn: Int) {
+        guard expiresIn > 0 else {
+            logger.error("save: 不正な expiresIn を検出しました (expiresIn=\(expiresIn))")
+            delete()
+            return
+        }
         let expiryDate = Date().addingTimeInterval(TimeInterval(expiresIn))
         let payload = Payload(accessToken: token, expiryDate: expiryDate)
         do {
             let data = try JSONEncoder().encode(payload)
-            delete()
-            let attributes: [CFString: Any] = [
+            let query: [CFString: Any] = [
                 kSecClass:            kSecClassGenericPassword,
                 kSecAttrService:      service,
                 kSecAttrAccount:      account,
-                kSecValueData:        data,
-                kSecAttrAccessible:   kSecAttrAccessibleAfterFirstUnlock,
             ]
-            let status = SecItemAdd(attributes as CFDictionary, nil)
-            if status == errSecSuccess {
+            let updateAttrs: [CFString: Any] = [
+                kSecValueData: data,
+                kSecAttrAccessible: kSecAttrAccessibleAfterFirstUnlock,
+            ]
+            let updateStatus = SecItemUpdate(query as CFDictionary, updateAttrs as CFDictionary)
+            if updateStatus == errSecSuccess {
                 logger.info("save: トークンを保存しました (expiry=\(expiryDate))")
-            } else {
-                logger.error("save: Keychain への保存に失敗しました (status=\(status))")
+                return
             }
+            if updateStatus == errSecItemNotFound {
+                var addAttrs = query
+                addAttrs[kSecValueData] = data
+                addAttrs[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlock
+                let addStatus = SecItemAdd(addAttrs as CFDictionary, nil)
+                if addStatus == errSecSuccess {
+                    logger.info("save: トークンを保存しました (expiry=\(expiryDate))")
+                } else {
+                    logger.error("save: Keychain への保存に失敗しました (status=\(addStatus))")
+                }
+                return
+            }
+            logger.error("save: Keychain 更新に失敗しました (status=\(updateStatus))")
         } catch {
             logger.error("save: エンコードに失敗しました (error=\(error))")
             return

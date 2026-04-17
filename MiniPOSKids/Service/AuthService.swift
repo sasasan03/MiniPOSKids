@@ -51,6 +51,7 @@ protocol AuthServiceProtocol {
 @Observable
 final class AuthService: AuthServiceProtocol {
     private let apiClient: APIClientProtocol
+    /// トークンを書き込む（認証後に保存）
     private var tokenStore: TokenStoreProtocol
 
     private static var clientId: String { AppConfig.smaregiClientId }

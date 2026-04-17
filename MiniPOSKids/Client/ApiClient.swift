@@ -184,6 +184,11 @@ final class APIClient: APIClientProtocol {
             guard 200...299 ~= httpResponse.statusCode else {
                 throw APIError.statusCode(httpResponse.statusCode, data)
             }
+            
+            // 削除やログアウトなど、レスポンスボディを返さないAPI向けの処理
+            if ResponseBody.self == EmptyResponse.self {
+                return EmptyResponse() as! ResponseBody
+            }
 
             do {
                 return try decoder.decode(ResponseBody.self, from: data)

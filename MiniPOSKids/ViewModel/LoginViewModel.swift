@@ -18,7 +18,9 @@ private final class PresentationContext: NSObject, ASWebAuthenticationPresentati
             .first { $0.activationState == .foregroundActive }?
             .windows.first(where: { $0.isKeyWindow })
             ?? scenes.flatMap { $0.windows }.first(where: { $0.isKeyWindow })
-            ?? scenes.flatMap { $0.windows }.first!
+            ?? scenes.flatMap { $0.windows }.first
+            ?? scenes.first.map { UIWindow(windowScene: $0) }
+            ?? UIWindow()
     }
 }
 
@@ -29,6 +31,7 @@ final class LoginViewModel {
     private let authService: AuthServiceProtocol
     private var webAuthSession: ASWebAuthenticationSession?
     private let presentationContext = PresentationContext()
+    private var pendingState: String?
 
     init(authService: AuthServiceProtocol) {
         self.authService = authService
@@ -39,9 +42,11 @@ final class LoginViewModel {
     func login(onSuccess: @escaping () -> Void) {
         let codeVerifier  = generateCodeVerifier()
         let codeChallenge = generateCodeChallenge(from: codeVerifier)
+        let state         = generateState()
+        pendingState      = state
 
         let session = ASWebAuthenticationSession(
-            url: buildAuthURL(codeChallenge: codeChallenge),
+            url: buildAuthURL(codeChallenge: codeChallenge, state: state),
             callbackURLScheme: "miniposkids"
         ) { [weak self] callbackURL, error in
             guard let self else { return }
@@ -52,12 +57,19 @@ final class LoginViewModel {
                 errorMessage = "認証に失敗しました: \(error.localizedDescription)"
                 return
             }
-            guard let callbackURL,
-                  let code = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?
-                      .queryItems?
-                      .first(where: { $0.name == "code" })?
-                      .value
-            else {
+            guard let callbackURL else {
+                errorMessage = "認証コードを取得できませんでした"
+                return
+            }
+            let items = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.queryItems
+            let returnedState = items?.first(where: { $0.name == "state" })?.value
+            guard returnedState == pendingState else {
+                pendingState = nil
+                errorMessage = "不正なレスポンスを検出しました（state 不一致）"
+                return
+            }
+            pendingState = nil
+            guard let code = items?.first(where: { $0.name == "code" })?.value else {
                 errorMessage = "認証コードを取得できませんでした"
                 return
             }
@@ -98,7 +110,16 @@ final class LoginViewModel {
             .replacingOccurrences(of: "=", with: "")
     }
 
-    private func buildAuthURL(codeChallenge: String) -> URL {
+    private func generateState() -> String {
+        var bytes = [UInt8](repeating: 0, count: 32)
+        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+        return Data(bytes).base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
+    }
+
+    private func buildAuthURL(codeChallenge: String, state: String) -> URL {
         var components = URLComponents(string: "https://id.smaregi.dev/authorize")!
         components.queryItems = [
             URLQueryItem(name: "response_type",          value: "code"),
@@ -107,6 +128,7 @@ final class LoginViewModel {
             URLQueryItem(name: "scope",                  value: "pos.products:read pos.stores:read"),
             URLQueryItem(name: "code_challenge",         value: codeChallenge),
             URLQueryItem(name: "code_challenge_method",  value: "S256"),
+            URLQueryItem(name: "state",                  value: state),
         ]
         return components.url!
     }
