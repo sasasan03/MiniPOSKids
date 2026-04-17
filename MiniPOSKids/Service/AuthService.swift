@@ -70,7 +70,7 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
     private let logger = Logger(subsystem: "com.miniposkids.auth", category: "AuthService")
 
     private static var clientId: String { AppConfig.smaregiClientId }
-    private static let redirectUri = "miniposkids://callback"
+    private static var redirectUri: String { AppConfig.oauthRedirectURI }
 
     init(
         apiClient: APIClientProtocol,

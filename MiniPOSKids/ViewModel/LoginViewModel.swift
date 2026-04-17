@@ -54,40 +54,41 @@ final class LoginViewModel {
 
         let session = ASWebAuthenticationSession(
             url: buildAuthURL(codeChallenge: codeChallenge, state: state),
-            callbackURLScheme: "miniposkids"
+            callbackURLScheme: AppConfig.oauthCallbackScheme
         ) { [weak self] callbackURL, error in
-            guard let self else { return }
-            webAuthSession = nil
+            // @Observable のプロパティ変更はすべて MainActor で実行する
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                webAuthSession = nil
 
-            if let error {
-                if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin { return }
-                errorMessage = "認証に失敗しました: \(error.localizedDescription)"
-                return
-            }
-            guard let callbackURL else {
-                errorMessage = "認証コードを取得できませんでした"
-                return
-            }
-            let items = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.queryItems
-            let returnedState = items?.first(where: { $0.name == "state" })?.value
-            guard returnedState == pendingState else {
+                if let error {
+                    pendingState = nil
+                    if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin { return }
+                    errorMessage = "認証に失敗しました: \(error.localizedDescription)"
+                    return
+                }
+                guard let callbackURL else {
+                    pendingState = nil
+                    errorMessage = "認証コードを取得できませんでした"
+                    return
+                }
+                let items = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false)?.queryItems
+                let returnedState = items?.first(where: { $0.name == "state" })?.value
+                guard returnedState == pendingState else {
+                    pendingState = nil
+                    errorMessage = "不正なレスポンスを検出しました（state 不一致）"
+                    return
+                }
                 pendingState = nil
-                errorMessage = "不正なレスポンスを検出しました（state 不一致）"
-                return
-            }
-            pendingState = nil
-            guard let code = items?.first(where: { $0.name == "code" })?.value else {
-                errorMessage = "認証コードを取得できませんでした"
-                return
-            }
-            Task {
+                guard let code = items?.first(where: { $0.name == "code" })?.value else {
+                    errorMessage = "認証コードを取得できませんでした"
+                    return
+                }
                 do {
-                    _ = try await self.authService.exchangeToken(code: code, codeVerifier: codeVerifier)
-                    await MainActor.run { onSuccess() }
+                    _ = try await authService.exchangeToken(code: code, codeVerifier: codeVerifier)
+                    onSuccess()
                 } catch {
-                    await MainActor.run {
-                        self.errorMessage = "トークン取得に失敗しました: \(error.localizedDescription)"
-                    }
+                    errorMessage = "トークン取得に失敗しました: \(error.localizedDescription)"
                 }
             }
         }
@@ -96,6 +97,7 @@ final class LoginViewModel {
         webAuthSession = session
         guard session.start() else {
             webAuthSession = nil
+            pendingState = nil
             errorMessage = "認証セッションを開始できませんでした"
             return
         }
@@ -143,7 +145,7 @@ final class LoginViewModel {
         components.queryItems = [
             URLQueryItem(name: "response_type",          value: "code"),
             URLQueryItem(name: "client_id",              value: AppConfig.smaregiClientId),
-            URLQueryItem(name: "redirect_uri",           value: "miniposkids://callback"),
+            URLQueryItem(name: "redirect_uri",           value: AppConfig.oauthRedirectURI),
             URLQueryItem(name: "scope",                  value: "pos.products:read pos.stores:read"),
             URLQueryItem(name: "code_challenge",         value: codeChallenge),
             URLQueryItem(name: "code_challenge_method",  value: "S256"),
