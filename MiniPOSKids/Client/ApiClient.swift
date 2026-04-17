@@ -43,6 +43,12 @@ final class APIClient: APIClientProtocol {
     private let tokenStore: TokenStoreProtocol
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
+    /// Unicode characterの値に制限をかける（"-._~"のみ使用可能）
+    private static let formURLEncodedAllowed: CharacterSet = {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return allowed
+    }()
 
     init(
         baseURL: String,
@@ -157,10 +163,13 @@ final class APIClient: APIClientProtocol {
 
         request.httpBody = formParams
             .map { key, value in
+                let encodedKey = key.addingPercentEncoding(
+                    withAllowedCharacters: Self.formURLEncodedAllowed
+                ) ?? key
                 let encodedValue = value.addingPercentEncoding(
-                    withAllowedCharacters: .urlQueryAllowed
+                    withAllowedCharacters: Self.formURLEncodedAllowed
                 ) ?? value
-                return "\(key)=\(encodedValue)"
+                return "\(encodedKey)=\(encodedValue)"
             }
             .sorted()
             .joined(separator: "&")

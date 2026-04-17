@@ -17,15 +17,14 @@ final class KeychainTokenStore: TokenStoreProtocol {
         let expiryDate: Date
     }
     
-    var accessToken: String? {
-        get { read() }
-        set {
-            if let newValue {
-                save(newValue)
-            } else {
-                delete()
-            }
-        }
+    var accessToken: String? { read() }
+
+    func save(accessToken: String, expiresIn: Int) {
+        save(accessToken, expiresIn: expiresIn)
+    }
+
+    func deleteToken() {
+        delete()
     }
     
     private func read() -> String? {
@@ -69,8 +68,8 @@ final class KeychainTokenStore: TokenStoreProtocol {
         }
     }
 
-    private func save(_ token: String) {
-        let expiryDate = Date().addingTimeInterval(3600)
+    private func save(_ token: String, expiresIn: Int) {
+        let expiryDate = Date().addingTimeInterval(TimeInterval(expiresIn))
         let payload = Payload(accessToken: token, expiryDate: expiryDate)
         do {
             let data = try JSONEncoder().encode(payload)
@@ -90,7 +89,7 @@ final class KeychainTokenStore: TokenStoreProtocol {
             }
         } catch {
             logger.error("save: エンコードに失敗しました (error=\(error))")
-            fatalError("save error \(error)")
+            return
         }
     }
 

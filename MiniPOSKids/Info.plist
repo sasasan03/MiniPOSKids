@@ -2,8 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>SMAREGI_CLIENT_ID</key>
-	<string>$(SMAREGI_CLIENT_ID)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -11,9 +9,11 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>miniposkids://callback</string>
+				<string>miniposkids</string>
 			</array>
 		</dict>
 	</array>
+	<key>SMAREGI_CLIENT_ID</key>
+	<string>$(SMAREGI_CLIENT_ID)</string>
 </dict>
 </plist>

@@ -10,7 +10,7 @@ import CryptoKit
 import Foundation
 import Observation
 
-// ASWebAuthenticationSession が Safari を表示するために必要なアンカー提供クラス
+/// ASWebAuthenticationSession が Safari を表示するために必要なアンカー提供クラス
 private final class PresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         let scenes = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }

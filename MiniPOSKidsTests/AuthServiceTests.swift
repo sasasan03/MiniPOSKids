@@ -35,6 +35,17 @@ final class MockAPIClient: APIClientProtocol {
 
 final class MockTokenStore: TokenStoreProtocol {
     var accessToken: String?
+    var savedExpiresIn: Int?
+
+    func save(accessToken: String, expiresIn: Int) {
+        self.accessToken = accessToken
+        self.savedExpiresIn = expiresIn
+    }
+
+    func deleteToken() {
+        accessToken = nil
+        savedExpiresIn = nil
+    }
 }
 
 // MARK: - Helpers
@@ -75,6 +86,7 @@ struct AuthServiceTests {
         _ = try await sut.exchangeToken(code: "auth-code", codeVerifier: "verifier")
 
         #expect(store.accessToken == "stored-token")
+        #expect(store.savedExpiresIn == 3600)
     }
 
     @Test func exchangeToken_success_sendsCorrectParams() async throws {

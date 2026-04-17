@@ -10,6 +10,7 @@ import SwiftUI
 @Observable
 final class AppState {
     var session: Session
+    private let tokenStore: TokenStoreProtocol
 
     enum Session {
         case unauthenticated
@@ -17,6 +18,7 @@ final class AppState {
     }
 
     init(tokenStore: TokenStoreProtocol = KeychainTokenStore()) {
+        self.tokenStore = tokenStore
         session = tokenStore.accessToken != nil ? .authenticated : .unauthenticated
     }
 
@@ -25,6 +27,7 @@ final class AppState {
     }
 
     func logout() {
+        tokenStore.deleteToken()
         session = .unauthenticated
     }
 }

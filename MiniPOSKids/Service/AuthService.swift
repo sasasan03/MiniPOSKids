@@ -11,11 +11,21 @@ import Observation
 // MARK: - TokenStore
 
 protocol TokenStoreProtocol {
-    var accessToken: String? { get set }
+    var accessToken: String? { get }
+    func save(accessToken: String, expiresIn: Int)
+    func deleteToken()
 }
 
 final class TokenStore: TokenStoreProtocol {
     var accessToken: String?
+
+    func save(accessToken: String, expiresIn: Int) {
+        self.accessToken = accessToken
+    }
+
+    func deleteToken() {
+        accessToken = nil
+    }
 }
 
 struct TokenResponse: Decodable {
@@ -70,7 +80,7 @@ final class AuthService: AuthServiceProtocol {
             formParams: params,
             headers: [:]
         )
-        tokenStore.accessToken = tokenResponse.accessToken
+        tokenStore.save(accessToken: tokenResponse.accessToken, expiresIn: tokenResponse.expiresIn)
         return tokenResponse
     }
 }
