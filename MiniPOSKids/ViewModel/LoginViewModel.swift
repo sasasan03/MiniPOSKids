@@ -40,10 +40,17 @@ final class LoginViewModel {
     // MARK: - Login
 
     func login(onSuccess: @escaping () -> Void) {
-        let codeVerifier  = generateCodeVerifier()
+        let codeVerifier: String
+        let state: String
+        do {
+            codeVerifier = try generateCodeVerifier()
+            state        = try generateState()
+        } catch {
+            errorMessage = "認証の初期化に失敗しました"
+            return
+        }
         let codeChallenge = generateCodeChallenge(from: codeVerifier)
-        let state         = generateState()
-        pendingState      = state
+        pendingState = state
 
         let session = ASWebAuthenticationSession(
             url: buildAuthURL(codeChallenge: codeChallenge, state: state),
@@ -90,15 +97,28 @@ final class LoginViewModel {
         session.start()
     }
 
-    // MARK: - PKCE
+    // MARK: - PKCE / State
 
-    private func generateCodeVerifier() -> String {
-        var bytes = [UInt8](repeating: 0, count: 32)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
+    private enum CryptoError: Error {
+        case randomGenerationFailed(OSStatus)
+    }
+
+    /// 暗号学的乱数を生成して base64url エンコードした文字列を返す
+    /// SecRandomCopyBytes の失敗を検出して throw する
+    private func generateRandomBase64URLString(byteCount: Int) throws -> String {
+        var bytes = [UInt8](repeating: 0, count: byteCount)
+        let status = SecRandomCopyBytes(kSecRandomDefault, byteCount, &bytes)
+        guard status == errSecSuccess else {
+            throw CryptoError.randomGenerationFailed(status)
+        }
         return Data(bytes).base64EncodedString()
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
+    }
+
+    private func generateCodeVerifier() throws -> String {
+        try generateRandomBase64URLString(byteCount: 32)
     }
 
     private func generateCodeChallenge(from verifier: String) -> String {
@@ -110,13 +130,8 @@ final class LoginViewModel {
             .replacingOccurrences(of: "=", with: "")
     }
 
-    private func generateState() -> String {
-        var bytes = [UInt8](repeating: 0, count: 32)
-        _ = SecRandomCopyBytes(kSecRandomDefault, bytes.count, &bytes)
-        return Data(bytes).base64EncodedString()
-            .replacingOccurrences(of: "+", with: "-")
-            .replacingOccurrences(of: "/", with: "_")
-            .replacingOccurrences(of: "=", with: "")
+    private func generateState() throws -> String {
+        try generateRandomBase64URLString(byteCount: 32)
     }
 
     private func buildAuthURL(codeChallenge: String, state: String) -> URL {
