@@ -34,7 +34,7 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
         self.tokenStore = tokenStore
     }
 
-    /// PKCEトークン交換。アクセストークンを取得。
+    /// 認可コード＋codeVerifier をサーバへ送り、アクセストークンを取得
     func exchangeToken(code: String, codeVerifier: String) async throws -> TokenResponse {
         logger.info("exchangeToken: 開始")
         let params: [String: String] = [
