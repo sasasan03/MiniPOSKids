@@ -27,6 +27,7 @@ protocol APIClientProtocol {
         headers: [String: String]
     ) async throws -> ResponseBody
 
+    /// フォーム URL エンコード形式のリクエストを送信し、レスポンスを指定した型へデコードする。
     func sendForm<ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -119,7 +120,22 @@ final class APIClient: APIClientProtocol {
         }
     }
 
-    /// フォームエンコードされたPOSTリクエスト送信（OAuth トークン交換など）
+    /// フォーム URL エンコード形式のリクエストを送信し、レスポンスを指定した型へデコードする。
+    ///
+    /// OAuth のトークン取得など、JSON ではなく `application/x-www-form-urlencoded` の
+    /// ボディを要求する API 向けの送信メソッド。`send` と異なり、このメソッドでは
+    /// `tokenRefresher` による Authorization ヘッダーの付与や 401 時の自動リトライは行わない。
+    /// レスポンスボディが不要な API では `ResponseBody` に `EmptyResponse` を指定する。
+    /// フォーム URL エンコード形式では、`key1=value1&key2=value2` のようにキーと値を `=` で結び、
+    /// 複数の項目を `&` で連結する。
+    ///
+    /// - Parameters:
+    ///   - path: `baseURL` からの相対パス。
+    ///   - method: リクエストに使用する HTTP メソッド。
+    ///   - formParams: フォームボディに含めるキーと値。
+    ///   - headers: 追加で設定する HTTP ヘッダー。
+    /// - Returns: レスポンスボディを `ResponseBody` としてデコードした値。
+    /// - Throws: URL 生成、通信、ステータスコード、レスポンス形式、デコードに失敗した場合は `APIError` を投げる。
     func sendForm<ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -141,6 +157,8 @@ final class APIClient: APIClientProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
+        // application/x-www-form-urlencoded の仕様に合わせてキーと値をエンコードし、
+        // 生成されるボディの順序がぶれないようにソートする。
         request.httpBody = formParams
             .map { key, value in
                 let encodedKey = key.addingPercentEncoding(
@@ -168,6 +186,7 @@ final class APIClient: APIClientProtocol {
                 throw APIError.statusCode(httpResponse.statusCode, data)
             }
 
+            // レスポンスボディを使わない API ではデコード処理を省略する。
             if ResponseBody.self == EmptyResponse.self {
                 return EmptyResponse() as! ResponseBody
             }
