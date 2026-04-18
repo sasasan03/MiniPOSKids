@@ -12,7 +12,7 @@ struct AuthRootView: View {
     @State private var router = AuthRouter()
     @State private var authService: AuthService
     init(tokenStore: TokenStoreProtocol) {
-        let apiClient = APIClient(baseURL: "https://id.smaregi.dev", tokenStore: tokenStore)
+        let apiClient = APIClient(baseURL: "https://id.smaregi.dev")
         let authService = AuthService(apiClient: apiClient, tokenStore: tokenStore)
         apiClient.tokenRefresher = authService
         _authService = State(initialValue: authService)
@@ -45,11 +45,11 @@ struct AuthRootView: View {
 }
 
 private struct PreviewContainer: View {
-    private let tokenStore: TokenStore
+    private let tokenStore: TokenStoreProtocol
     @State private var appState: AppState
 
     init() {
-        let store = TokenStore()
+        let store = InMemoryTokenStore()
         tokenStore = store
         _appState = State(initialValue: AppState(tokenStore: store))
     }

@@ -106,9 +106,9 @@ private struct PreviewContainer: View {
     @State private var router = AuthRouter()
     @State private var appState = AppState()
     @State private var authService: AuthService = {
-        let store = TokenStore()
+        let store = InMemoryTokenStore()
         return AuthService(
-            apiClient: APIClient(baseURL: "https://id.smaregi.dev", tokenStore: store),
+            apiClient: APIClient(baseURL: "https://id.smaregi.dev"),
             tokenStore: store
         )
     }()

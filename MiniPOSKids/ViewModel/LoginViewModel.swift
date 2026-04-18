@@ -146,7 +146,7 @@ final class LoginViewModel {
             URLQueryItem(name: "response_type",          value: "code"),
             URLQueryItem(name: "client_id",              value: AppConfig.smaregiClientId),
             URLQueryItem(name: "redirect_uri",           value: AppConfig.oauthRedirectURI),
-            URLQueryItem(name: "scope",                  value: "pos.products:read pos.stores:read"),
+            URLQueryItem(name: "scope",                  value: "pos.products:read pos.stores:read offline_access"),
             URLQueryItem(name: "code_challenge",         value: codeChallenge),
             URLQueryItem(name: "code_challenge_method",  value: "S256"),
             URLQueryItem(name: "state",                  value: state),
