@@ -14,6 +14,20 @@ enum HTTPMethod: String {
 }
 
 protocol APIClientProtocol {
+    /// JSON ボディを持つリクエストを送信し、レスポンスを指定した型へデコードする。
+    ///
+    /// `body` を JSON エンコードして `Content-Type: application/json` と共に送信する。
+    /// `tokenRefresher` が設定されている場合は Authorization ヘッダーを自動付与し、
+    /// 401 受信時にアクセストークンを再取得して 1 回だけリトライする。
+    /// レスポンスボディが不要な API では `ResponseBody` に `EmptyResponse` を指定する。
+    ///
+    /// - Parameters:
+    ///   - path: `baseURL` からの相対パス。
+    ///   - method: リクエストに使用する HTTP メソッド。
+    ///   - body: リクエストボディとして送信するエンコード可能な値。`nil` の場合はボディなしで送信する。
+    ///   - headers: 追加で設定する HTTP ヘッダー。
+    /// - Returns: レスポンスボディを `ResponseBody` としてデコードした値。
+    /// - Throws: URL 生成、エンコード、通信、ステータスコード、デコードに失敗した場合は `APIError` を投げる。
     func send<RequestBody: Encodable, ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -21,6 +35,18 @@ protocol APIClientProtocol {
         headers: [String: String]
     ) async throws -> ResponseBody
 
+    /// JSON レスポンスを返すリクエストを送信する。
+    ///
+    /// リクエストボディを持たない API 向けの簡略オーバーロード。
+    /// `tokenRefresher` が設定されている場合は Authorization ヘッダーを自動付与し、
+    /// 401 受信時にアクセストークンを再取得して 1 回だけリトライする。
+    ///
+    /// - Parameters:
+    ///   - path: `baseURL` からの相対パス。
+    ///   - method: リクエストに使用する HTTP メソッド。デフォルトは `.get`。
+    ///   - headers: 追加で設定する HTTP ヘッダー。
+    /// - Returns: レスポンスボディを `ResponseBody` としてデコードした値。
+    /// - Throws: URL 生成、通信、ステータスコード、デコードに失敗した場合は `APIError` を投げる。
     func send<ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -64,7 +90,6 @@ final class APIClient: APIClientProtocol {
         self.decoder = decoder
     }
 
-    /// GET専用のリクエスト送信
     func send<ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod = .get,
@@ -78,7 +103,6 @@ final class APIClient: APIClientProtocol {
         )
     }
 
-    /// GET以外でリクエスト送信
     func send<RequestBody: Encodable, ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -92,10 +116,12 @@ final class APIClient: APIClientProtocol {
 
         logger.debug("send: → \(method.rawValue, privacy: .public) \(path, privacy: .public)")
 
+        // MARK: リクエスト作成
         var request = URLRequest(url: url)
         request.httpMethod = method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
+        // MARK: body
         if let body = body {
             do {
                 request.httpBody = try encoder.encode(body)

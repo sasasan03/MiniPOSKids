@@ -9,6 +9,7 @@ import AuthenticationServices
 import CryptoKit
 import Foundation
 import Observation
+import OSLog
 
 /// ASWebAuthenticationSession が Safari を表示するために必要なアンカー提供クラス
 private final class PresentationContext: NSObject, ASWebAuthenticationPresentationContextProviding {
@@ -32,6 +33,7 @@ final class LoginViewModel {
     private var webAuthSession: ASWebAuthenticationSession?
     private let presentationContext = PresentationContext()
     private var pendingState: String?
+    private let logger = Logger(subsystem: "com.miniposkids.auth", category: "LoginViewModel")
 
     init(authService: AuthServiceProtocol) {
         self.authService = authService
@@ -55,6 +57,7 @@ final class LoginViewModel {
             codeVerifier = try generateCodeVerifier()
             state        = try generateState()
         } catch {
+            logger.error("login: PKCEパラメータ生成に失敗しました error=\(error)")
             errorMessage = "認証の初期化に失敗しました"
             return
         }
@@ -78,12 +81,17 @@ final class LoginViewModel {
                 // MARK: ④ エラー・キャンセル処理
                 if let error {
                     pendingState = nil
-                    if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin { return }
+                    if (error as? ASWebAuthenticationSessionError)?.code == .canceledLogin {
+                        logger.info("login: ユーザーがログインをキャンセルしました")
+                        return
+                    }
+                    logger.error("login: 認証セッションエラー error=\(error)")
                     errorMessage = "認証に失敗しました: \(error.localizedDescription)"
                     return
                 }
                 guard let callbackURL else {
                     pendingState = nil
+                    logger.error("login: コールバックURLが nil")
                     errorMessage = "認証コードを取得できませんでした"
                     return
                 }
@@ -94,6 +102,8 @@ final class LoginViewModel {
                 // state を取り出し、自分が作成した state と同じか検証する。
                 guard returnedState == pendingState else {
                     pendingState = nil
+                    // .privateを指定することでreturnedStateの値をマスクさせることができる（マスクあり：state=<private>　マスクなし：state=abc123XYZ）
+                    logger.fault("login: state不一致を検出 (CSRF攻撃の可能性) returned=\(returnedState ?? "nil", privacy: .private)")
                     errorMessage = "不正なレスポンスを検出しました（state 不一致）"
                     return
                 }
@@ -101,6 +111,7 @@ final class LoginViewModel {
 
                 // MARK: ⑥ 認可コードを取得
                 guard let code = items?.first(where: { $0.name == "code" })?.value else {
+                    logger.error("login: コールバックURLに認可コードが含まれていない url=\(callbackURL, privacy: .private)")
                     errorMessage = "認証コードを取得できませんでした"
                     return
                 }
@@ -108,8 +119,10 @@ final class LoginViewModel {
                 // MARK: ⑦ 認可コード＋codeVerifier をサーバへ送り、アクセストークンを取得
                 do {
                     _ = try await authService.exchangeToken(code: code, codeVerifier: codeVerifier)
+                    logger.info("login: ログイン成功")
                     onSuccess()
                 } catch {
+                    logger.error("login: トークン交換に失敗しました error=\(error)")
                     errorMessage = "トークン取得に失敗しました: \(error.localizedDescription)"
                 }
             }
@@ -122,9 +135,11 @@ final class LoginViewModel {
         guard session.start() else {
             webAuthSession = nil
             pendingState = nil
+            logger.error("login: ASWebAuthenticationSession の開始に失敗しました")
             errorMessage = "認証セッションを開始できませんでした"
             return
         }
+        logger.info("login: 認証セッション開始")
     }
 
     // MARK: - PKCE / State

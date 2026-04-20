@@ -15,7 +15,7 @@ struct AppRootView: View {
             if appState.session == .unauthenticated {
                 AuthRootView(tokenStore: appState.tokenStore)
             } else if appState.session == .authenticated {
-                HomeRootView()
+                HomeRootView(tokenStore: appState.tokenStore)
             } else {
                 Text("session is not set")
             }

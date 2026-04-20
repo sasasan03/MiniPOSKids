@@ -9,6 +9,19 @@ import SwiftUI
 
 struct HomeRootView: View {
     @State private var router = HomeRouter()
+    private let authService: AuthService
+    private let storeService: StoreServiceProtocol
+
+    init(tokenStore: TokenStoreProtocol, contractId: String = AppConfig.smaregiContractId) {
+        let authApiClient = APIClient(baseURL: "https://id.smaregi.dev")
+        let authService = AuthService(apiClient: authApiClient, tokenStore: tokenStore)
+
+        let platformApiClient = APIClient(baseURL: "https://api.smaregi.dev")
+        platformApiClient.tokenRefresher = authService
+
+        self.authService = authService
+        self.storeService = StoreService(apiClient: platformApiClient, contractId: contractId)
+    }
     
     var body: some View {
         NavigationStack(path: $router.path) {
@@ -26,7 +39,7 @@ struct HomeRootView: View {
         case .home:
             HomeView()
         case .storeList:
-            StoreListView()
+            StoreListView(viewModel: StoreListViewModel(storeService: storeService))
                 .navigationTitle("登録店舗一覧")
         case .printProductBarcode:
             ProductBarcodeView()
@@ -57,5 +70,5 @@ struct HomeRootView: View {
 }
 
 #Preview {
-    HomeRootView()
+    HomeRootView(tokenStore: InMemoryTokenStore(), contractId: "preview_contract_id")
 }

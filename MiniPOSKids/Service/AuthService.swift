@@ -105,6 +105,7 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
     }
 
     func invalidateCachedToken() {
+        logger.info("invalidateCachedToken: アクセストークンキャッシュを破棄しました")
         cachedAccessToken = nil
         accessTokenExpiry = nil
     }

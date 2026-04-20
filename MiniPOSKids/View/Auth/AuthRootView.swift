@@ -11,6 +11,7 @@ struct AuthRootView: View {
     @Environment(AppState.self) private var appState
     @State private var router = AuthRouter()
     @State private var authService: AuthService
+    
     init(tokenStore: TokenStoreProtocol) {
         let apiClient = APIClient(baseURL: "https://id.smaregi.dev")
         let authService = AuthService(apiClient: apiClient, tokenStore: tokenStore)
