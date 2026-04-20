@@ -24,12 +24,18 @@ struct StoreService: StoreServiceProtocol {
     }
     
     func fetchStore() async throws -> [StoreResponse] {
-        let storeResponses: [StoreResponse] = try await apiClient.send(
-            path: "/\(contractId)/pos/stores?limit=1000&sort=storeId:asc",
-            method: .get,
-            headers: [:]
-        )
-        logger.info("fetchStore: 店舗一覧を取得しました count=\(storeResponses.count)")
-        return storeResponses
+        logger.info("fetchStore: 開始")
+        do {
+            let storeResponses: [StoreResponse] = try await apiClient.send(
+                path: "/\(contractId)/pos/stores?limit=1000&sort=storeId:asc",
+                method: .get,
+                headers: [:]
+            )
+            logger.info("fetchStore: 成功 count=\(storeResponses.count)")
+            return storeResponses
+        } catch {
+            logger.error("fetchStore: 失敗 error=\(error)")
+            throw error
+        }
     }
 }
