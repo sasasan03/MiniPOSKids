@@ -52,14 +52,20 @@ private final class MockURLProtocol: URLProtocol {
 
 private final class MockTokenRefresher: TokenRefresherProtocol {
     var refreshCalled = false
+    var refreshCallCount = 0
+    var accessToken = "refreshed-token"
     var refreshError: Error?
-    var onRefresh: (() -> Void)?
+    var onRefresh: ((Int) -> Void)?
 
-    func refreshAccessToken() async throws {
+    func refreshAccessToken() async throws -> String {
         refreshCalled = true
-        onRefresh?()
+        refreshCallCount += 1
+        onRefresh?(refreshCallCount)
         if let error = refreshError { throw error }
+        return accessToken
     }
+
+    func invalidateCachedToken() {}
 }
 
 // MARK: - Helpers
@@ -94,18 +100,17 @@ private func makeItemJSON(id: Int = 1, name: String = "test") -> Data {
 
 // MARK: - Tests
 
+@MainActor
 @Suite(.serialized)
 struct APIClientTests {
     private let baseURL = "https://api.example.com"
 
     private func makeSUT(
-        baseURL: String? = nil,
-        tokenStore: TokenStoreProtocol = TokenStore()
+        baseURL: String? = nil
     ) -> APIClient {
         APIClient(
             baseURL: baseURL ?? self.baseURL,
-            session: makeMockSession(),
-            tokenStore: tokenStore
+            session: makeMockSession()
         )
     }
 
@@ -167,14 +172,16 @@ struct APIClientTests {
         #expect(captured?.value(forHTTPHeaderField: "Accept") == "application/json")
     }
 
-    @Test func send_setsAuthorizationHeader_whenTokenExists() async throws {
+    @Test func send_setsAuthorizationHeader_whenTokenRefresherReturnsToken() async throws {
         var captured: URLRequest?
         MockURLProtocol.requestHandler = { request in
             captured = request; return (makeResponse(), makeItemJSON())
         }
-        let store = TokenStore()
-        store.accessToken = "my-token"
-        let _: Item = try await makeSUT(tokenStore: store).send(path: "/items", method: .get, headers: [:])
+        let refresher = MockTokenRefresher()
+        refresher.accessToken = "my-token"
+        let sut = makeSUT()
+        sut.tokenRefresher = refresher
+        let _: Item = try await sut.send(path: "/items", method: .get, headers: [:])
 
         #expect(captured?.value(forHTTPHeaderField: "Authorization") == "Bearer my-token")
     }
@@ -326,17 +333,18 @@ struct APIClientTests {
         #expect(captured?.value(forHTTPHeaderField: "Content-Type") == "application/x-www-form-urlencoded")
     }
 
-    @Test func sendForm_doesNotSetAuthorizationHeader_whenTokenExists() async throws {
+    @Test func sendForm_doesNotSetAuthorizationHeader_whenTokenRefresherExists() async throws {
         var captured: URLRequest?
         MockURLProtocol.requestHandler = { request in
             captured = request; return (makeResponse(), makeItemJSON())
         }
-        let store = TokenStore()
-        store.accessToken = "existing-token"
-        let _: Item = try await makeSUT(tokenStore: store)
-            .sendForm(path: "/token", method: .post, formParams: ["key": "value"], headers: [:])
+        let refresher = MockTokenRefresher()
+        let sut = makeSUT()
+        sut.tokenRefresher = refresher
+        let _: Item = try await sut.sendForm(path: "/token", method: .post, formParams: ["key": "value"], headers: [:])
 
         #expect(captured?.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(!refresher.refreshCalled)
     }
 
     @Test func sendForm_encodesParamsInBody() async throws {
@@ -430,13 +438,13 @@ struct APIClientTests {
     // MARK: send - 401 自動リフレッシュ
 
     @Test func send_on401_withTokenRefresher_retriesOnce() async throws {
-        var callCount = 0
         let refresher = MockTokenRefresher()
-        refresher.onRefresh = {
-            MockURLProtocol.requestHandler = { _ in (makeResponse(), makeItemJSON(id: 1, name: "retried")) }
+        refresher.onRefresh = { refreshCallCount in
+            if refreshCallCount == 2 {
+                MockURLProtocol.requestHandler = { _ in (makeResponse(), makeItemJSON(id: 1, name: "retried")) }
+            }
         }
         MockURLProtocol.requestHandler = { _ in
-            callCount += 1
             return (makeResponse(statusCode: 401), Data())
         }
 
@@ -445,10 +453,11 @@ struct APIClientTests {
         let item: Item = try await sut.send(path: "/items", method: .get, headers: [:])
 
         #expect(refresher.refreshCalled)
+        #expect(refresher.refreshCallCount == 2)
         #expect(item.name == "retried")
     }
 
-    @Test func send_on401_withTokenRefresher_throwsSessionExpired_whenRefreshFails() async throws {
+    @Test func send_withTokenRefresher_throwsSessionExpired_whenRefreshFails() async throws {
         MockURLProtocol.requestHandler = { _ in (makeResponse(statusCode: 401), Data()) }
         let refresher = MockTokenRefresher()
         refresher.refreshError = APIError.sessionExpired

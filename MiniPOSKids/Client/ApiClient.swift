@@ -11,9 +11,6 @@ import OSLog
 enum HTTPMethod: String {
     case get = "GET"
     case post = "POST"
-//    case put = "PUT"
-//    case patch = "PATCH"
-//    case delete = "DELETE"
 }
 
 protocol APIClientProtocol {
@@ -30,6 +27,7 @@ protocol APIClientProtocol {
         headers: [String: String]
     ) async throws -> ResponseBody
 
+    /// フォーム URL エンコード形式のリクエストを送信し、レスポンスを指定した型へデコードする。
     func sendForm<ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -41,11 +39,10 @@ protocol APIClientProtocol {
 final class APIClient: APIClientProtocol {
     private let baseURL: String
     private let session: URLSession
-    private let tokenStore: TokenStoreProtocol
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
     private let logger = Logger(subsystem: "com.miniposkids", category: "APIClient")
-    /// 401 を受け取ったときにトークンを更新する責務を持つオブジェクト
+    /// API リクエスト送信時にアクセストークンを取得する責務を持つオブジェクト
     weak var tokenRefresher: (any TokenRefresherProtocol)?
 
     /// Unicode characterの値に制限をかける（"-._~"のみ使用可能）
@@ -58,13 +55,11 @@ final class APIClient: APIClientProtocol {
     init(
         baseURL: String,
         session: URLSession = .shared,
-        tokenStore: TokenStoreProtocol,
         encoder: JSONEncoder = JSONEncoder(),
         decoder: JSONDecoder = JSONDecoder()
     ) {
         self.baseURL = baseURL
         self.session = session
-        self.tokenStore = tokenStore
         self.encoder = encoder
         self.decoder = decoder
     }
@@ -101,14 +96,6 @@ final class APIClient: APIClientProtocol {
         request.httpMethod = method.rawValue
         request.setValue("application/json", forHTTPHeaderField: "Accept")
 
-        if let token = tokenStore.accessToken {
-            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        }
-
-        headers.forEach { key, value in
-            request.setValue(value, forHTTPHeaderField: key)
-        }
-
         if let body = body {
             do {
                 request.httpBody = try encoder.encode(body)
@@ -120,6 +107,10 @@ final class APIClient: APIClientProtocol {
         }
 
         do {
+            try await setAuthorizationHeaderIfNeeded(on: &request)
+            headers.forEach { key, value in
+                request.setValue(value, forHTTPHeaderField: key)
+            }
             return try await performRequest(request, method: method, path: path)
         } catch let error as APIError {
             throw error
@@ -129,7 +120,22 @@ final class APIClient: APIClientProtocol {
         }
     }
 
-    /// フォームエンコードされたPOSTリクエスト送信（OAuth トークン交換など）
+    /// フォーム URL エンコード形式のリクエストを送信し、レスポンスを指定した型へデコードする。
+    ///
+    /// OAuth のトークン取得など、JSON ではなく `application/x-www-form-urlencoded` の
+    /// ボディを要求する API 向けの送信メソッド。`send` と異なり、このメソッドでは
+    /// `tokenRefresher` による Authorization ヘッダーの付与や 401 時の自動リトライは行わない。
+    /// レスポンスボディが不要な API では `ResponseBody` に `EmptyResponse` を指定する。
+    /// フォーム URL エンコード形式では、`key1=value1&key2=value2` のようにキーと値を `=` で結び、
+    /// 複数の項目を `&` で連結する。
+    ///
+    /// - Parameters:
+    ///   - path: `baseURL` からの相対パス。
+    ///   - method: リクエストに使用する HTTP メソッド。
+    ///   - formParams: フォームボディに含めるキーと値。
+    ///   - headers: 追加で設定する HTTP ヘッダー。
+    /// - Returns: レスポンスボディを `ResponseBody` としてデコードした値。
+    /// - Throws: URL 生成、通信、ステータスコード、レスポンス形式、デコードに失敗した場合は `APIError` を投げる。
     func sendForm<ResponseBody: Decodable>(
         path: String,
         method: HTTPMethod,
@@ -151,6 +157,8 @@ final class APIClient: APIClientProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
 
+        // application/x-www-form-urlencoded の仕様に合わせてキーと値をエンコードし、
+        // 生成されるボディの順序がぶれないようにソートする。
         request.httpBody = formParams
             .map { key, value in
                 let encodedKey = key.addingPercentEncoding(
@@ -178,6 +186,7 @@ final class APIClient: APIClientProtocol {
                 throw APIError.statusCode(httpResponse.statusCode, data)
             }
 
+            // レスポンスボディを使わない API ではデコード処理を省略する。
             if ResponseBody.self == EmptyResponse.self {
                 return EmptyResponse() as! ResponseBody
             }
@@ -203,7 +212,13 @@ final class APIClient: APIClientProtocol {
         return URL(string: normalizedBase + normalizedPath)
     }
 
-    /// リクエストを実行し、401 のとき tokenRefresher でリフレッシュして1回だけリトライする
+    private func setAuthorizationHeaderIfNeeded(on request: inout URLRequest) async throws {
+        guard let tokenRefresher else { return }
+        let accessToken = try await tokenRefresher.refreshAccessToken()
+        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+    }
+
+    /// リクエストを実行し、401 のときアクセストークンを再取得して1回だけリトライする
     private func performRequest<ResponseBody: Decodable>(
         _ request: URLRequest,
         method: HTTPMethod,
@@ -220,11 +235,10 @@ final class APIClient: APIClientProtocol {
 
         if httpResponse.statusCode == 401, !isRetry, let refresher = tokenRefresher {
             logger.info("performRequest: 401 を受信 → アクセストークンをリフレッシュしてリトライ (\(method.rawValue, privacy: .public) \(path, privacy: .public))")
-            try await refresher.refreshAccessToken()
+            refresher.invalidateCachedToken()
+            let newToken = try await refresher.refreshAccessToken()
             var retryRequest = request
-            if let newToken = tokenStore.accessToken {
-                retryRequest.setValue("Bearer \(newToken)", forHTTPHeaderField: "Authorization")
-            }
+            retryRequest.setValue("Bearer \(newToken)", forHTTPHeaderField: "Authorization")
             return try await performRequest(retryRequest, method: method, path: path, isRetry: true)
         }
 

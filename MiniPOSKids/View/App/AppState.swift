@@ -19,7 +19,7 @@ final class AppState {
 
     init(tokenStore: TokenStoreProtocol = KeychainTokenStore()) {
         self.tokenStore = tokenStore
-        session = (tokenStore.accessToken != nil || tokenStore.refreshToken != nil) ? .authenticated : .unauthenticated
+        session = (tokenStore.refreshToken != nil) ? .authenticated : .unauthenticated
     }
 
     func loginSucceeded() {
