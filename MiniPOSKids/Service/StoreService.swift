@@ -26,8 +26,13 @@ struct StoreService: StoreServiceProtocol {
     func fetchStore() async throws -> [StoreResponse] {
         logger.info("fetchStore: 開始")
         do {
+            var allowed = CharacterSet.urlPathAllowed
+            // URLを構築するものを許可するが、/は使えない。予約文字禁止させる。
+            allowed.remove(charactersIn: "/")
+            // 除外された文字を使った場合「%〜〜」の形の文字列にして返される
+            let encodedContractId = contractId.addingPercentEncoding(withAllowedCharacters: allowed) ?? contractId
             let storeResponses: [StoreResponse] = try await apiClient.send(
-                path: "/\(contractId)/pos/stores?limit=1000&sort=storeId:asc",
+                path: "/\(encodedContractId)/pos/stores?limit=1000&sort=storeId:asc",
                 method: .get,
                 headers: [:]
             )

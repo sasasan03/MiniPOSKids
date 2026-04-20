@@ -102,7 +102,8 @@ final class LoginViewModel {
                 // state を取り出し、自分が作成した state と同じか検証する。
                 guard returnedState == pendingState else {
                     pendingState = nil
-                    logger.fault("login: state不一致を検出 (CSRF攻撃の可能性) returned=\(returnedState ?? "nil", privacy: .public)")
+                    // .privateを指定することでreturnedStateの値をマスクさせることができる（マスクあり：state=<private>　マスクなし：state=abc123XYZ）
+                    logger.fault("login: state不一致を検出 (CSRF攻撃の可能性) returned=\(returnedState ?? "nil", privacy: .private)")
                     errorMessage = "不正なレスポンスを検出しました（state 不一致）"
                     return
                 }
@@ -110,7 +111,7 @@ final class LoginViewModel {
 
                 // MARK: ⑥ 認可コードを取得
                 guard let code = items?.first(where: { $0.name == "code" })?.value else {
-                    logger.error("login: コールバックURLに認可コードが含まれていない url=\(callbackURL, privacy: .public)")
+                    logger.error("login: コールバックURLに認可コードが含まれていない url=\(callbackURL, privacy: .private)")
                     errorMessage = "認証コードを取得できませんでした"
                     return
                 }
