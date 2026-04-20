@@ -23,6 +23,9 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
     private var tokenStore: TokenStoreProtocol
     private let logger = Logger(subsystem: "com.miniposkids.auth", category: "AuthService")
 
+    private var cachedAccessToken: String?
+    private var accessTokenExpiry: Date?
+
     private static var clientId: String { AppConfig.smaregiClientId }
     private static var redirectUri: String { AppConfig.oauthRedirectURI }
 
@@ -52,6 +55,7 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
                 headers: [:]
             )
             tokenStore.save(refreshToken: tokenResponse.refreshToken)
+            cacheAccessToken(tokenResponse.accessToken, expiresIn: tokenResponse.expiresIn)
             logger.info("exchangeToken: 成功 (expiresIn=\(tokenResponse.expiresIn) hasRefreshToken=\(tokenResponse.refreshToken != nil))")
             return tokenResponse
         } catch {
@@ -62,6 +66,10 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
 
     // MARK: リフレッシュトークンによる自動更新
     func refreshAccessToken() async throws -> String {
+        if let token = cachedAccessToken, let expiry = accessTokenExpiry, Date() < expiry {
+            logger.debug("refreshAccessToken: キャッシュ済みトークンを返します")
+            return token
+        }
         guard let currentRefreshToken = tokenStore.refreshToken else {
             logger.warning("refreshAccessToken: リフレッシュトークンが存在しない → sessionExpired")
             throw APIError.sessionExpired
@@ -81,16 +89,31 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
             )
             let usedNewRefreshToken = tokenResponse.refreshToken != nil
             tokenStore.save(refreshToken: tokenResponse.refreshToken ?? currentRefreshToken)
+            cacheAccessToken(tokenResponse.accessToken, expiresIn: tokenResponse.expiresIn)
             logger.info("refreshAccessToken: 成功 (expiresIn=\(tokenResponse.expiresIn) refreshTokenRotated=\(usedNewRefreshToken))")
             return tokenResponse.accessToken
         } catch let error as APIError {
             if case .statusCode(let code, _) = error, code == 400 || code == 401 {
                 logger.warning("refreshAccessToken: サーバーが \(code) を返した → トークン削除 → sessionExpired")
+                invalidateCachedToken()
                 tokenStore.deleteToken()
                 throw APIError.sessionExpired
             }
             logger.error("refreshAccessToken: 失敗 error=\(error)")
             throw error
         }
+    }
+
+    func invalidateCachedToken() {
+        cachedAccessToken = nil
+        accessTokenExpiry = nil
+    }
+
+    // MARK: - Private
+
+    private func cacheAccessToken(_ token: String, expiresIn: Int) {
+        cachedAccessToken = token
+        // 60秒のバッファを設けて期限切れ前にリフレッシュ
+        accessTokenExpiry = Date().addingTimeInterval(TimeInterval(expiresIn) - 60)
     }
 }

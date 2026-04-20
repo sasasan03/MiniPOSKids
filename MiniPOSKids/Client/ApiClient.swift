@@ -235,6 +235,7 @@ final class APIClient: APIClientProtocol {
 
         if httpResponse.statusCode == 401, !isRetry, let refresher = tokenRefresher {
             logger.info("performRequest: 401 を受信 → アクセストークンをリフレッシュしてリトライ (\(method.rawValue, privacy: .public) \(path, privacy: .public))")
+            refresher.invalidateCachedToken()
             let newToken = try await refresher.refreshAccessToken()
             var retryRequest = request
             retryRequest.setValue("Bearer \(newToken)", forHTTPHeaderField: "Authorization")

@@ -64,6 +64,8 @@ private final class MockTokenRefresher: TokenRefresherProtocol {
         if let error = refreshError { throw error }
         return accessToken
     }
+
+    func invalidateCachedToken() {}
 }
 
 // MARK: - Helpers

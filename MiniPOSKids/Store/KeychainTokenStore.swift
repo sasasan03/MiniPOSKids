@@ -12,16 +12,19 @@ final class KeychainTokenStore: TokenStoreProtocol {
     private let account = "refreshToken"
     private let logger = Logger(subsystem: "com.miniposkids.auth", category: "KeychainTokenStore")
     
-    /// Keychainへリフレッシュトークンを保存することと、取り出すこと
     private struct Payload: Codable {
-        let token: String?
+        let token: String
     }
-    
+
     var refreshToken: String? {
         readRefreshToken()?.token
     }
-    
+
     func save(refreshToken: String?) {
+        guard let refreshToken else {
+            deleteToken()
+            return
+        }
         do {
             let payload = Payload(token: refreshToken)
             let data = try JSONEncoder().encode(payload)
@@ -91,24 +94,24 @@ final class KeychainTokenStore: TokenStoreProtocol {
         
         switch status {
         case errSecItemNotFound:
-            logger.info("readPayload: トークンが存在しません")
+            logger.info("readRefreshToken: トークンが存在しません")
             return nil
         case let s where s != errSecSuccess:
-            logger.error("readPayload: Keychain の読み取りに失敗しました (status=\(s))")
+            logger.error("readRefreshToken: Keychain の読み取りに失敗しました (status=\(s))")
             return nil
         default:
             break
         }
-        
+
         guard let data = result as? Data else {
-            logger.error("readPayload: データの取得に失敗しました")
+            logger.error("readRefreshToken: データの取得に失敗しました")
             return nil
         }
-        
+
         do {
             return try JSONDecoder().decode(Payload.self, from: data)
         } catch {
-            logger.error("readPayload: デコードに失敗しました (error=\(error))")
+            logger.error("readRefreshToken: デコードに失敗しました (error=\(error))")
             return nil
         }
     }

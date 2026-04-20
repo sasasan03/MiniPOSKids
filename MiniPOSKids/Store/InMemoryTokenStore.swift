@@ -16,7 +16,7 @@ protocol TokenStoreProtocol {
 }
 
 final class InMemoryTokenStore: TokenStoreProtocol {
-    var refreshToken: String?
+    private(set) var refreshToken: String?
 
     func save(refreshToken: String?) {
         self.refreshToken = refreshToken
