@@ -15,5 +15,7 @@
 	</array>
 	<key>SMAREGI_CLIENT_ID</key>
 	<string>$(SMAREGI_CLIENT_ID)</string>
+    <key>SMAREGI_CONTRACT_ID</key>
+    <string>$(SMAREGI_CONTRACT_ID)</string>
 </dict>
 </plist>
