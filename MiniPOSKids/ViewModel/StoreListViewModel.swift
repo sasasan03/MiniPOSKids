@@ -11,11 +11,12 @@ import OSLog
 @MainActor
 @Observable
 final class StoreListViewModel {
-    
+
     var errorMessage: String?
     var stores: [StoreResponse] = []
     private let storeService: StoreServiceProtocol
     private let logger = Logger(subsystem: "com.miniposkids.stores", category: "StoreListViewModel")
+    var onSessionExpired: (() -> Void)?
 
     init(storeService: StoreServiceProtocol) {
         self.storeService = storeService
@@ -27,6 +28,11 @@ final class StoreListViewModel {
             stores = try await storeService.fetchStore()
             errorMessage = nil
             logger.info("getStores: 成功 count=\(self.stores.count)")
+        } catch is CancellationError {
+            logger.debug("getStores: キャンセル")
+        } catch APIError.sessionExpired {
+            logger.warning("getStores: セッション期限切れ → ログアウト")
+            onSessionExpired?()
         } catch {
             logger.error("getStores: 失敗 error=\(error)")
             errorMessage = "店舗一覧の取得に失敗しました"

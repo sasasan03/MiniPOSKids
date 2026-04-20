@@ -8,14 +8,15 @@
 import SwiftUI
 
 struct StoreListView: View {
-    
+
     @Environment(HomeRouter.self) private var router
+    @Environment(AppState.self) private var appState
     @State private var viewModel: StoreListViewModel
 
     init(viewModel: StoreListViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
-    
+
     var body: some View {
         List {
             if let errorMessage = viewModel.errorMessage {
@@ -30,6 +31,7 @@ struct StoreListView: View {
             }
         }
         .task {
+            viewModel.onSessionExpired = { appState.logout() }
             await viewModel.getStores()
         }
     }
