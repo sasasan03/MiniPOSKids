@@ -7,18 +7,30 @@
 
 import SwiftUI
 
-struct BarcodeRow: View {
+struct BarcodeRow<ImageContent: View>: View {
+    let name: String
+    let price: String
+    let imageContent: () -> ImageContent
+
+    init(
+        name: String,
+        price: String,
+        @ViewBuilder imageContent: @escaping () -> ImageContent
+    ) {
+        self.name = name
+        self.price = price
+        self.imageContent = imageContent
+    }
+
     var body: some View {
         VStack {
             HStack {
-                Text("りんご")
+                Text(name)
                 Spacer()
-                Text("100円")
+                Text(price)
             }
-            Image(systemName: "car")
+            imageContent()
                 .frame(width: 90, height: 70)
-                .background(Color.blue)
-            
         }
         .padding()
         .overlay(
@@ -30,6 +42,10 @@ struct BarcodeRow: View {
 
 #Preview {
     List {
-        BarcodeRow()
+        BarcodeRow(name: "りんご", price: "100円") {
+            Image(systemName: "apple.logo")
+                .resizable()
+                .scaledToFit()
+        }
     }
 }

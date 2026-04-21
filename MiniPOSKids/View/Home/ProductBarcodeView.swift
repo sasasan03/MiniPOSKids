@@ -8,20 +8,24 @@
 import SwiftUI
 
 struct ProductBarcodeView: View {
-    private let colors: [Color] = [.pink, .blue, .orange, .green]
 
     let columns = [
         GridItem(.flexible()),
         GridItem(.flexible())
     ]
     var body: some View {
-        LazyVGrid(columns: columns) {
-            BarcodeRow()
-            BarcodeRow()
-            BarcodeRow()
-            BarcodeRow()
+        ScrollView {
+            LazyVGrid(columns: columns) {
+                ForEach(1...15, id: \.self) { i in
+                    BarcodeRow(name: "りんご\(i)", price: "\((500...1000).randomElement()!)円") {
+                        Image(systemName: "apple.logo")
+                            .resizable()
+                            .scaledToFit()
+                    }
+                }
+            }
+            .padding()
         }
-        .frame(width: 300)
     }
 }
 
