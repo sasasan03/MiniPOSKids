@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 import CoreImage.CIFilterBuiltins
 
 struct ProductBarcodeView: View {
@@ -13,32 +14,44 @@ struct ProductBarcodeView: View {
     @Environment(HomeRouter.self) private var router
     @Environment(AppState.self) private var appState
     @State private var viewModel: StoreItemViewModel
-    
-    init(viewModel: StoreItemViewModel) {
-        _viewModel = State(initialValue: viewModel)
-    }
-    
-    let context = CIContext()
     let columns = [
+        GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10)
     ]
     
+    init(viewModel: StoreItemViewModel) {
+        _viewModel = State(initialValue: viewModel)
+    }
+    // バーコード関連
+    private let context = CIContext()
+    // PDF関連
+    private let a4PageSize = CGSize(width: 595.2, height: 841.8)
+    private let pdfColumnCount = 3
+    private let pdfGridSpacing: CGFloat = 10
+    private let pdfPagePadding: CGFloat = 8
+    private let pdfItemHeight: CGFloat = 95
+    
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 10) {
-            ForEach(viewModel.items, id: \.productId) { item in
-                BarcodeRow(name: item.productName, price: item.price) {
-                    barcode(id: item.productId)
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(viewModel.items, id: \.productId) { item in
+                    BarcodeRow(name: item.productName, price: item.price) {
+                        barcode(id: item.productId)
+                    }
                 }
             }
-        }
-        .padding(8)
-        .task {
-            await viewModel.getStoreItems()
+            .padding(8)
+            .task {
+                await viewModel.getStoreItems()
+            }
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                ShareLink("Share URL", item: render())
+                ShareLink(item: renderPDF()) {
+                    Text("PDF")
+                }
+                .disabled(viewModel.items.isEmpty)
             }
         }
     }
@@ -73,34 +86,102 @@ struct ProductBarcodeView: View {
             .foregroundStyle(.white, .red)
     }
     
-    private func render() -> URL {
-        let pageSize = CGSize(width: 595, height: 842)
-        let content = VStack(spacing: 0) {
-            LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(viewModel.items, id: \.productId) { item in
+    // １列当たりの横幅
+    private var pdfColumnWidth: CGFloat {
+        let totalSpacing = pdfGridSpacing * CGFloat(pdfColumnCount - 1)
+        let availableWidth = a4PageSize.width - (pdfPagePadding * 2) - totalSpacing
+        return availableWidth / CGFloat(pdfColumnCount)
+    }
+    
+    // １ページのPDFに何行のRowが入るか計算する
+    private var pdfRowsPerPage: Int {
+        let availableHeight = a4PageSize.height - (pdfPagePadding * 2)
+        let rowHeightWithSpacing = pdfItemHeight + pdfGridSpacing
+        return max(1, Int((availableHeight + pdfGridSpacing) / rowHeightWithSpacing))
+    }
+    
+    // １ページに表示できるアイテムの総数
+    private var pdfItemsPerPage: Int {
+        pdfRowsPerPage * pdfColumnCount
+    }
+    
+    // 同じ幅の列を、指定した数だけ並べた配列
+    private var pdfColumns: [GridItem] {
+        Array(
+            repeating: GridItem(.fixed(pdfColumnWidth), spacing: pdfGridSpacing),
+            count: pdfColumnCount
+        )
+    }
+    
+    // ページ単位のデータに変換
+    private var pdfPageItemGroups: [[StoreItemResponse]] {
+        stride(from: 0, to: viewModel.items.count, by: pdfItemsPerPage).map { startIndex in
+            let endIndex = min(startIndex + pdfItemsPerPage, viewModel.items.count)
+            return Array(viewModel.items[startIndex..<endIndex])
+        }
+    }
+    
+    private func pdfPageContent(items: [StoreItemResponse]) -> some View {
+        VStack(spacing: 0) {
+            LazyVGrid(columns: pdfColumns, spacing: pdfGridSpacing) {
+                ForEach(Array(items.enumerated()), id: \.offset) { _, item in
                     BarcodeRow(name: item.productName, price: item.price) {
                         barcode(id: item.productId)
                     }
+                    .frame(width: pdfColumnWidth, height: pdfItemHeight)
                 }
             }
-            .padding(8)
+            .padding(pdfPagePadding)
             Spacer(minLength: 0)
         }
-        .frame(width: pageSize.width, height: pageSize.height, alignment: .top)
-
-        let renderer = ImageRenderer(content: content)
-        renderer.proposedSize = .init(pageSize)
-        renderer.scale = 1
-        let url = URL.documentsDirectory.appending(path: "output.pdf")
-        renderer.render { size, renderInContext in
-            var mediaBox = CGRect(origin: .zero, size: pageSize)
-            guard let pdf = CGContext(url as CFURL, mediaBox: &mediaBox, nil) else { return }
-            pdf.beginPDFPage(nil)
-            pdf.translateBy(x: 0, y: pageSize.height - size.height)
-            renderInContext(pdf)
-            pdf.endPDFPage()
-            pdf.closePDF()
+        .frame(width: a4PageSize.width, height: a4PageSize.height, alignment: .top)
+        .background(Color.white)
+    }
+    
+    private func renderPDF() -> URL {
+        let url = URL.documentsDirectory.appending(path: "barcodes.pdf")
+        guard !viewModel.items.isEmpty else { return url }
+        
+        // ページの区切りをA4サイズにする
+        var mediaBox = CGRect(origin: .zero, size: a4PageSize)
+        guard let pdf = CGContext(url as CFURL, mediaBox: &mediaBox, nil) else {
+            return url
         }
+        
+        // PDFのサイズを指定
+        let pageInfo = [
+            kCGPDFContextMediaBox as String: mediaBox
+        ] as CFDictionary
+        
+        
+        for items in pdfPageItemGroups {
+            // A4 1ページに収まる分の商品だけをSwiftUI Viewとして組み立てる。
+            let renderer = ImageRenderer(content: pdfPageContent(items: items))
+            // PDFの用紙サイズとSwiftUI Viewの描画サイズをA4にそろえる。
+            renderer.proposedSize = .init(a4PageSize)
+            // PDF上では1ptをそのまま1ptとして描画する。
+            renderer.scale = 1
+            
+            // >>>>>>>>>>>ここから1ページ分のPDF描画を開始する。
+            pdf.beginPDFPage(pageInfo)
+            // 背景色など、このページ用の描画状態を一時的に保存する。
+            pdf.saveGState()
+            // 透明部分が黒く見えないよう、ページ全体を白で塗る。
+            pdf.setFillColor(UIColor.white.cgColor)
+            pdf.fill(mediaBox)
+            
+            // SwiftUIで作ったバーコード一覧をPDFの描画コンテキストへ描き込む。
+            renderer.render { _, renderInContext in
+                renderInContext(pdf)
+            }
+            
+            // 描画状態を戻してから、このページを閉じる。
+            pdf.restoreGState()
+            pdf.endPDFPage()
+            // <<<<<<<<<<<< PDF描画終了
+        }
+        
+        pdf.closePDF()
         return url
     }
 }

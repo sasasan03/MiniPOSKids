@@ -50,6 +50,7 @@ struct BarcodeRow<ImageContent: View>: View {
 #Preview {
     let columns = [
         GridItem(.flexible()),
+        GridItem(.flexible()),
         GridItem(.flexible())
     ]
     
