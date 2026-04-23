@@ -26,7 +26,7 @@ struct StoreListView: View {
 
             ForEach(viewModel.stores, id: \.storeId) { store in
                 Row(title: store.storeName) {
-                    router.navigationHomeRoutePush(.printProductBarcode)
+                    router.navigationHomeRoutePush(.printProductBarcode(store.storeId))
                 }
             }
         }
@@ -43,7 +43,8 @@ struct StoreListView: View {
             storeService: PreviewStoreService()
         )
     )
-        .environment(HomeRouter())
+    .environment(HomeRouter())
+    .environment(AppState(tokenStore: InMemoryTokenStore()))
 }
 
 private struct PreviewStoreService: StoreServiceProtocol {

@@ -11,16 +11,26 @@ struct HomeRootView: View {
     @State private var router = HomeRouter()
     private let authService: AuthService
     private let storeService: StoreServiceProtocol
+    private let storeItemService: StoreItemServiceProtocol
 
-    init(tokenStore: TokenStoreProtocol, contractId: String = AppConfig.smaregiContractId) {
+    // AppStoreからトークンを取得（キーチェーンのリフレッシュトークン）するためのtokenStore。
+    // contractId（契約者ID）はapi.smaregi.devのapiを呼び出すために必要
+    init(
+        tokenStore: TokenStoreProtocol,
+        contractId: String = AppConfig.smaregiContractId
+    ) {
+        // 認証取得用APIClient
         let authApiClient = APIClient(baseURL: "https://id.smaregi.dev")
         let authService = AuthService(apiClient: authApiClient, tokenStore: tokenStore)
 
+        // 店舗・商品情報取得用APIClient。認可ページから返されるアクセストークンが必要
         let platformApiClient = APIClient(baseURL: "https://api.smaregi.dev")
+        // APIリクエスト → 401エラー → tokenRefresher.refreshToken() → 再リクエスト
         platformApiClient.tokenRefresher = authService
 
         self.authService = authService
         self.storeService = StoreService(apiClient: platformApiClient, contractId: contractId)
+        self.storeItemService = StoreItemService(apiClient: platformApiClient, contractId: contractId)
     }
     
     var body: some View {
@@ -41,9 +51,9 @@ struct HomeRootView: View {
         case .storeList:
             StoreListView(viewModel: StoreListViewModel(storeService: storeService))
                 .navigationTitle("登録店舗一覧")
-        case .printProductBarcode:
-            ProductBarcodeView()
-                .navigationTitle("商品バーコード")
+        case .printProductBarcode(let storeId):
+            ProductBarcodeView(viewModel: StoreItemViewModel(storeItemService: storeItemService, storeId: storeId))
+                .navigationTitle("商品バーコード一覧")
         case .selectAvailableBalance:
             SelectAvailableBalanceView()
                 .navigationTitle("利用可能残高選択画面")

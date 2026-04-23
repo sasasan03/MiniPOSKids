@@ -21,6 +21,9 @@
 		6946CCFD2F8B211400E9445E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CCFC2F8B211400E9445E /* HomeView.swift */; };
 		6946CCFF2F8B217700E9445E /* HomeRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CCFE2F8B217700E9445E /* HomeRouter.swift */; };
 		6946CD012F8B218000E9445E /* HomeRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6946CD002F8B218000E9445E /* HomeRoute.swift */; };
+		694EEB8D2F970CBC002AF0A7 /* StoreItemViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694EEB8C2F970CBC002AF0A7 /* StoreItemViewModel.swift */; };
+		694EEB8F2F970D15002AF0A7 /* StoreItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694EEB8E2F970D15002AF0A7 /* StoreItemService.swift */; };
+		694EEB912F970D3D002AF0A7 /* Item.swift in Sources */ = {isa = PBXBuildFile; fileRef = 694EEB902F970D3D002AF0A7 /* Item.swift */; };
 		6998AFDA2F9335CF00001CEB /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFD92F9335CF00001CEB /* Token.swift */; };
 		6998AFDD2F9336CA00001CEB /* InMemoryTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFDC2F9336CA00001CEB /* InMemoryTokenStore.swift */; };
 		6998AFE12F934D000001CEB0 /* TokenRefresherProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFE02F934D000001CEB0 /* TokenRefresherProtocol.swift */; };
@@ -79,6 +82,9 @@
 		6946CCFC2F8B211400E9445E /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		6946CCFE2F8B217700E9445E /* HomeRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRouter.swift; sourceTree = "<group>"; };
 		6946CD002F8B218000E9445E /* HomeRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeRoute.swift; sourceTree = "<group>"; };
+		694EEB8C2F970CBC002AF0A7 /* StoreItemViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreItemViewModel.swift; sourceTree = "<group>"; };
+		694EEB8E2F970D15002AF0A7 /* StoreItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreItemService.swift; sourceTree = "<group>"; };
+		694EEB902F970D3D002AF0A7 /* Item.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Item.swift; sourceTree = "<group>"; };
 		697E5F342F84D5B0008C8E1D /* MiniPOSKids.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MiniPOSKids.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		697E5F412F84D5B3008C8E1D /* MiniPOSKidsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiniPOSKidsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		697E5F4B2F84D5B3008C8E1D /* MiniPOSKidsUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MiniPOSKidsUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -207,6 +213,7 @@
 			children = (
 				69BA5F322F8F8E7700FF3C71 /* LoginViewModel.swift */,
 				692461152F9443BF00D9DB35 /* StoreListViewModel.swift */,
+				694EEB8C2F970CBC002AF0A7 /* StoreItemViewModel.swift */,
 			);
 			path = ViewModel;
 			sourceTree = "<group>";
@@ -216,6 +223,7 @@
 			children = (
 				6998AFD92F9335CF00001CEB /* Token.swift */,
 				692461172F94452300D9DB35 /* Store.swift */,
+				694EEB902F970D3D002AF0A7 /* Item.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -301,6 +309,7 @@
 			children = (
 				69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */,
 				692461192F94690100D9DB35 /* StoreService.swift */,
+				694EEB8E2F970D15002AF0A7 /* StoreItemService.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -479,6 +488,7 @@
 				69F095E62F8CABAA00477B4F /* ScanQRCodeView.swift in Sources */,
 				693B763E2F8741760078FCAD /* AuthRouter.swift in Sources */,
 				69F095C52F8C82BE00477B4F /* PurchaseSuccessView.swift in Sources */,
+				694EEB912F970D3D002AF0A7 /* Item.swift in Sources */,
 				69BA5F262F8F5F3C00FF3C71 /* ApiClient.swift in Sources */,
 				6998AFE12F934D000001CEB0 /* TokenRefresherProtocol.swift in Sources */,
 				6998AFDA2F9335CF00001CEB /* Token.swift in Sources */,
@@ -490,8 +500,10 @@
 				693B76382F8740EC0078FCAD /* AppState.swift in Sources */,
 				693B763C2F87416E0078FCAD /* AuthRoute.swift in Sources */,
 				69BA5F332F8F8E7700FF3C71 /* LoginViewModel.swift in Sources */,
+				694EEB8F2F970D15002AF0A7 /* StoreItemService.swift in Sources */,
 				69BA5F2C2F8F60BD00FF3C71 /* AuthService.swift in Sources */,
 				6946CCFD2F8B211400E9445E /* HomeView.swift in Sources */,
+				694EEB8D2F970CBC002AF0A7 /* StoreItemViewModel.swift in Sources */,
 				69F095BD2F8C824900477B4F /* SelectAvailableBalanceView.swift in Sources */,
 				692461182F94452300D9DB35 /* Store.swift in Sources */,
 				693B76482F8770CB0078FCAD /* LoginView.swift in Sources */,

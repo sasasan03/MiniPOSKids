@@ -10,7 +10,7 @@ import Foundation
 enum HomeRoute: Hashable {
     case home
     case storeList
-    case printProductBarcode
+    case printProductBarcode(String)
     case selectAvailableBalance
     case showBuyerQRCode
     case cashRegister

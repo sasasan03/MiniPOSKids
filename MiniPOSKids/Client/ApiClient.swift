@@ -69,6 +69,7 @@ final class APIClient: APIClientProtocol {
     private let decoder: JSONDecoder
     private let logger = Logger(subsystem: "com.miniposkids", category: "APIClient")
     /// API リクエスト送信時にアクセストークンを取得する責務を持つオブジェクト
+    /// Swift 5.7以降（anyの明示が必要になった）
     weak var tokenRefresher: (any TokenRefresherProtocol)?
 
     /// Unicode characterの値に制限をかける（"-._~"のみ使用可能）
