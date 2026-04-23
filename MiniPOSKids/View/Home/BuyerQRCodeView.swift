@@ -50,7 +50,7 @@ struct BuyerQRCodeView: View {
             "timestamp": Date().timeIntervalSince1970,
             "transactionId": UUID().uuidString
         ]
-        let jsonData = try! JSONSerialization.data(withJSONObject: payload)
+        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload) else { return nil }
         qrCodeGenerator.message = jsonData
         qrCodeGenerator.correctionLevel = "H"
         guard let outputImage = qrCodeGenerator.outputImage?
