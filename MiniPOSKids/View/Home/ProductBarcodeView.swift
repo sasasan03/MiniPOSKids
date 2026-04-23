@@ -14,6 +14,7 @@ struct ProductBarcodeView: View {
     @Environment(HomeRouter.self) private var router
     @Environment(AppState.self) private var appState
     @State private var viewModel: StoreItemViewModel
+    @State private var pdfURL: URL?
     let columns = [
         GridItem(.flexible(), spacing: 10),
         GridItem(.flexible(), spacing: 10),
@@ -42,16 +43,23 @@ struct ProductBarcodeView: View {
                 }
             }
             .padding(8)
-            .task {
-                await viewModel.getStoreItems()
-            }
+        }
+        .task {
+            viewModel.onSessionExpired = { appState.logout() }
+            await viewModel.getStoreItems()
         }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                ShareLink(item: renderPDF()) {
-                    Text("PDF")
+                if let pdfURL {
+                    ShareLink(item: pdfURL) {
+                        Text("PDF")
+                    }
+                } else {
+                    Button("PDF"){
+                        pdfURL = renderPDF()
+                    }
+                    .disabled(viewModel.items.isEmpty)
                 }
-                .disabled(viewModel.items.isEmpty)
             }
         }
     }
@@ -139,14 +147,14 @@ struct ProductBarcodeView: View {
         .background(Color.white)
     }
     
-    private func renderPDF() -> URL {
+    private func renderPDF() -> URL? {
         let url = URL.documentsDirectory.appending(path: "barcodes.pdf")
-        guard !viewModel.items.isEmpty else { return url }
+        guard !viewModel.items.isEmpty else { return nil }
         
         // ページの区切りをA4サイズにする
         var mediaBox = CGRect(origin: .zero, size: a4PageSize)
         guard let pdf = CGContext(url as CFURL, mediaBox: &mediaBox, nil) else {
-            return url
+            return nil
         }
         
         // PDFのサイズを指定
