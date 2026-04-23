@@ -42,7 +42,7 @@ struct BuyerQRCodeView: View {
     private func makeQRCode(price: Int) -> UIImage? {
         let context = CIContext()
         let qrCodeGenerator = CIFilter.qrCodeGenerator()
-        // 数値だけではQRコードがシンプルになるため、余分なデータを持たせて複雑にしている。これを行うとQRCodeっぽくなり、見栄えを良くしている。
+        // 数値だけではQRコードがシンプルになるため、余分なデータを持たせQRCodeっぽくしている。（見栄えが良くなる）
         let payload: [String: Any] = [
             "amount": price,
             "currency": "JPY",
