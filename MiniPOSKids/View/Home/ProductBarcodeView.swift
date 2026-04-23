@@ -121,6 +121,7 @@ struct ProductBarcodeView: View {
         }
     }
     
+    // 実施にPDF化される画面を構築
     private func pdfPageContent(items: [StoreItemResponse]) -> some View {
         VStack(spacing: 0) {
             LazyVGrid(columns: pdfColumns, spacing: pdfGridSpacing) {

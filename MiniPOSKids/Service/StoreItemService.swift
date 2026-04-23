@@ -31,8 +31,9 @@ struct StoreItemService: StoreItemServiceProtocol {
             allowed.remove(charactersIn: "/")
             // 除外された文字を使った場合「%〜〜」の形の文字列にして返される
             let encodedContractId = contractId.addingPercentEncoding(withAllowedCharacters: allowed) ?? contractId
+            let encodedStoreId = storeId.addingPercentEncoding(withAllowedCharacters: allowed) ?? storeId
             let itemResponse: [StoreItemResponse] = try await apiClient.send(
-                path: "/\(encodedContractId)/pos/stores/\(storeId)/products",
+                path: "/\(encodedContractId)/pos/stores/\(encodedStoreId)/products",
                 method: .get,
                 headers: [:]
             )
