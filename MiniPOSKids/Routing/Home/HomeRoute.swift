@@ -12,7 +12,7 @@ enum HomeRoute: Hashable {
     case storeList
     case printProductBarcode(String)
     case selectAvailableBalance
-    case showBuyerQRCode
+    case showBuyerQRCode(Int)
     case cashRegister
     case scanProductBarcode
     case scanQRCode

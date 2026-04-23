@@ -57,8 +57,8 @@ struct HomeRootView: View {
         case .selectAvailableBalance:
             SelectAvailableBalanceView()
                 .navigationTitle("利用可能残高選択画面")
-        case .showBuyerQRCode:
-            BuyerQRCodeView()
+        case .showBuyerQRCode(let price):
+            BuyerQRCodeView(qrCodePrice: price)
                 .navigationTitle("QRコード決済画面")
         case .cashRegister:
             CashRegisterView()

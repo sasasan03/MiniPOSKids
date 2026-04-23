@@ -9,12 +9,16 @@ import SwiftUI
 
 struct SelectAvailableBalanceView: View {
     @Environment(HomeRouter.self) private var router
-    let dummyPrice = ["1000", "2000", "3000"]
+    private enum Price: Int {
+        case p1000 = 1000, p2000 = 2000, p3000 = 3000
+    }
+    private let qrCodePrices: [Price] = [.p1000, .p2000, .p3000]
+
     var body: some View {
         List {
-            ForEach(dummyPrice, id: \.self) { store in
-                Row(title: store) {
-                    router.navigationHomeRoutePush(.showBuyerQRCode)
+            ForEach(qrCodePrices, id: \.self) { qrCodePrice in
+                Row(title: "\(qrCodePrice.rawValue)") {
+                    router.navigationHomeRoutePush(.showBuyerQRCode(qrCodePrice.rawValue))
                 }
             }
             
