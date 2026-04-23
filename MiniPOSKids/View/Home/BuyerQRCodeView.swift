@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import CoreImage.CIFilterBuiltins
 
 struct BuyerQRCodeView: View {
     
@@ -24,7 +25,7 @@ struct BuyerQRCodeView: View {
                 Image(uiImage: qrCode)
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 200, height: 200)
+                    .frame(width: 300, height: 300)
             } else {
                 Image(systemName: "xmark.octagon.fill")
                     .resizable()
@@ -52,7 +53,8 @@ struct BuyerQRCodeView: View {
         let jsonData = try! JSONSerialization.data(withJSONObject: payload)
         qrCodeGenerator.message = jsonData
         qrCodeGenerator.correctionLevel = "H"
-        guard let outputImage = qrCodeGenerator.outputImage,
+        guard let outputImage = qrCodeGenerator.outputImage?
+                .transformed(by: CGAffineTransform(scaleX: 10, y: 10)),
               let cgImage = context.createCGImage(outputImage, from: outputImage.extent) else {
             return nil
         }
