@@ -59,7 +59,6 @@ struct BarcodeRow<ImageContent: View>: View {
             BarcodeRow(name: "りんご\(i)", price: "\((500...1000).randomElement()!)円") {
                 Color.red
             }
-//            .background(Color.blue)
         }
     }
     .padding()
