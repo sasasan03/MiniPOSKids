@@ -44,8 +44,9 @@ struct StoreItemService: StoreProductServiceProtocol {
                 headers: [:]
             )
             var products: [Product] = []
-            itemsResponse.forEach {
-                products.append(Product(dto: $0))
+            for item in itemsResponse {
+                let product = try Product(dto: item)
+                products.append(product)
             }
             logger.info("fetchItem: 成功 count=\(itemsResponse.count)")
             return products
@@ -60,13 +61,14 @@ struct StoreItemService: StoreProductServiceProtocol {
             var allowed = CharacterSet.urlPathAllowed
             allowed.remove(charactersIn: "/")
             let encodedContractId = contractId.addingPercentEncoding(withAllowedCharacters: allowed) ?? contractId
+            let encodedProductID = productID.addingPercentEncoding(withAllowedCharacters: allowed) ?? productID
             let itemResponse: StoreItemResponseDTO = try await apiClient.send(
-                path: "/\(encodedContractId)/pos/products/\(productID)",
+                path: "/\(encodedContractId)/pos/products/\(encodedProductID)",
                 method: .get,
                 headers: [:]
             )
             logger.info("fetchItem: 成功")
-            return Product.init(dto: itemResponse)
+            return try Product.init(dto: itemResponse)
         } catch {
             logger.error("fetchItem: 失敗 error=\(error)")
             throw error
@@ -75,10 +77,15 @@ struct StoreItemService: StoreProductServiceProtocol {
     }
 }
 
+
+
 private extension Product {
-    init(dto: StoreItemService.StoreItemResponseDTO) {
+    init(dto: StoreItemService.StoreItemResponseDTO) throws {
+        guard let dtoPrice = Int(dto.price) else {
+            throw StoreProductMappingError.invalidPrice(productID: dto.productId, rawPrice: dto.price)
+        }
         self.productID = dto.productId
         self.name = dto.productName
-        self.price = Int(dto.price) ?? 0
+        self.price = dtoPrice
     }
 }

@@ -8,6 +8,7 @@
 import Foundation
 import OSLog
 
+@MainActor
 @Observable
 final class CashRegisterViewModel {
     

@@ -31,6 +31,7 @@ struct CashRegisterView: View {
                 }
                 .listStyle(.grouped)
                 .onChange(of: router.scannedBarcode) { _, newValue in
+                    guard let value = newValue, !value.isEmpty else { return }
                     viewModel.addProduct(barcode: newValue)
                     router.clearScannedBarcode()
                 }
