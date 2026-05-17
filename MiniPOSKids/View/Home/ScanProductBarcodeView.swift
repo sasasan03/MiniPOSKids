@@ -12,27 +12,16 @@ import Vision
 struct ScanProductBarcodeView: View {
     @Environment(HomeRouter.self) var router
     @State private var isShowingAlert = false
-    @State private var payload = ""
+    @State private var scannedPayload = ""
     
     var body: some View {
         ZStack {
-//            Color.black
-//            VStack {
-//                Button {
-//                    router.navigationBack()
-//                } label: {
-//                    Text("読み取り成功")
-//                }
-//                Button {
-//                    isShowingAlert = true
-//                } label: {
-//                    Text("読み取り失敗")
-//                }
-//            }
-            BarcodeScannerCameraView(recognizedPayload: $payload)
-                .onChange(of: payload) { _, newValue in
-                    print("---------------------")
-                    print(">>> payload：\(newValue)")
+            BarcodeScannerCameraView(recognizedPayload: $scannedPayload)
+                .onChange(of: scannedPayload) { _, newValue in
+                    print("⭐️ScanProductBarcodeView newvalue",newValue)
+                    guard !newValue.isEmpty else { return }
+                    router.saveScannedBarcode(newValue)
+                    router.navigationBack()
                 }
         }
         .alert("読み取りに失敗しました", isPresented: $isShowingAlert) {
@@ -54,6 +43,8 @@ private struct BarcodeScannerCameraView: UIViewControllerRepresentable {
             isHighlightingEnabled: true
         )
         try? dataScannerViewController.startScanning()
+        // context.coordinatorをセットすることで、バーコードを読みとった後の振る舞いを決める
+        dataScannerViewController.delegate = context.coordinator
         return dataScannerViewController
     }
     
@@ -70,10 +61,8 @@ private struct BarcodeScannerCameraView: UIViewControllerRepresentable {
         
         // スキャナがアイテムの認識を開始
         func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            guard case .barcode(let barcode) = addedItems.first else { return print("⭐️⭐️") }
-            
+            guard case .barcode(let barcode) = addedItems.first else { return }
             if let payloadStringValue = barcode.payloadStringValue {
-                print(">>>>",payloadStringValue)
                 parent.recognizedPayload = payloadStringValue
             }
         }

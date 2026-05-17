@@ -10,35 +10,33 @@ import SwiftUI
 struct CashRegisterView: View {
     
     @Environment(HomeRouter.self) var router
+    @State private var viewModel: CashRegisterViewModel
+    let itemId: String? = nil
     
-    private struct Item: Identifiable {
-        let id = UUID()
-        let name: String
-        let price: Int
-        let pieces: Int
+    init(viewModel: CashRegisterViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
-    
-    @State private var items = [
-        Item(name: "りんご", price: 100, pieces: 5),
-        Item(name: "なし", price: 220, pieces: 3)
-    ]
-    
     
     var body: some View {
         ZStack {
             VStack {
                 List {
-                    ForEach(items){ item in
-                        receiptRow(itemName: item.name, pieces: item.pieces, price: item.price)
+                    ForEach($viewModel.cartProducts, id: \.product.productID){ $product in
+                        receiptRow(
+                            productName: product.product.name,
+                            pieces: product.quantity,
+                            price: product.product.price
+                        )
                     }
                 }
                 .listStyle(.grouped)
+                .onChange(of: router.scannedBarcode) { _, newValue in
+                    print("⭐️⭐️CashRegisterView 34 newValue：", newValue)
+                    viewModel.addProduct(barcode: newValue)
+                }
                 Spacer()
                 HStack {
-                    let total = items
-                        .map { item in item.price * item.pieces }
-                        .reduce(0, +)
-                    totalText(total)
+                    totalText(viewModel.totalPrice)
                     Spacer()
                     barcodeButton
                         .padding(.trailing, 5)
@@ -59,9 +57,9 @@ struct CashRegisterView: View {
         }
     }
     
-    private func receiptRow(itemName: String ,pieces: Int ,price: Int) -> some View {
+    private func receiptRow(productName: String ,pieces: Int ,price: Int) -> some View {
         HStack {
-            Text(itemName)
+            Text(productName)
                 .frame(width: 150, alignment: .leading)
             Spacer()
             Text("\(pieces)個 × \(price)円・・\(pieces * price)円")
@@ -103,6 +101,20 @@ struct CashRegisterView: View {
 }
 
 #Preview {
-    CashRegisterView()
-        .environment(HomeRouter())
+    CashRegisterView(
+        viewModel: CashRegisterViewModel(
+            storeItemService: PreviewStoreItemService()
+        )
+    )
+    .environment(HomeRouter())
+}
+
+private struct PreviewStoreItemService: StoreProductServiceProtocol {
+    func fetchStoreItem(productID: String) async throws -> Product? {
+        nil
+    }
+
+    func fetchStoreItems(storeId: String) async throws -> [Product] {
+        []
+    }
 }

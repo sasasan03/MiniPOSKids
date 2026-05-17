@@ -61,7 +61,7 @@ struct HomeRootView: View {
             BuyerQRCodeView(qrCodePrice: price)
                 .navigationTitle("QRコード決済画面")
         case .cashRegister:
-            CashRegisterView()
+            CashRegisterView(viewModel: CashRegisterViewModel(storeItemService: storeItemService))
                 .navigationTitle("レジ画面")
         case .scanProductBarcode:
             ScanProductBarcodeView()
