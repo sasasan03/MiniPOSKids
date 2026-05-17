@@ -31,8 +31,8 @@ struct CashRegisterView: View {
                 }
                 .listStyle(.grouped)
                 .onChange(of: router.scannedBarcode) { _, newValue in
-                    print("⭐️⭐️CashRegisterView 34 newValue：", newValue)
                     viewModel.addProduct(barcode: newValue)
+                    router.clearScannedBarcode()
                 }
                 Spacer()
                 HStack {

@@ -18,10 +18,10 @@ struct ScanProductBarcodeView: View {
         ZStack {
             BarcodeScannerCameraView(recognizedPayload: $scannedPayload)
                 .onChange(of: scannedPayload) { _, newValue in
-                    print("⭐️ScanProductBarcodeView newvalue",newValue)
                     guard !newValue.isEmpty else { return }
                     router.saveScannedBarcode(newValue)
                     router.navigationBack()
+                    scannedPayload = ""
                 }
         }
         .alert("読み取りに失敗しました", isPresented: $isShowingAlert) {
