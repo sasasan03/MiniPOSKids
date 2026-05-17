@@ -8,28 +8,28 @@
 import Foundation
 import OSLog
 
+// ProductBarcodeViewで使用されているため、命名の修正が必要
 @MainActor
 @Observable
-final class StoreItemViewModel {
+final class StoreProductViewModel {
 
     var errorMessage: String?
     let storeId: String
-    var items: [StoreItemResponse] = []
-    private let storeItemService: StoreItemServiceProtocol
+    var products: [Product] = []
+    private let storeItemService: StoreProductServiceProtocol
     private let logger = Logger(subsystem: "com.miniposkids.storeitems", category: "StoreItemViewModel")
     var onSessionExpired: (() -> Void)?
 
-    init(storeItemService: StoreItemServiceProtocol, storeId: String) {
+    init(storeItemService: StoreProductServiceProtocol, storeId: String) {
         self.storeItemService = storeItemService
         self.storeId = storeId
     }
 
     func getStoreItems() async {
-        logger.info("getStores: 開始")
         do {
-            items = try await storeItemService.fetchStoreItem(storeId: storeId)
+            products = try await storeItemService.fetchStoreItems(storeId: storeId)
             errorMessage = nil
-            logger.info("getStores: 成功 count=\(self.items.count)")
+            logger.info("getStores: 成功 count=\(self.products.count)")
         } catch is CancellationError {
             logger.debug("getStores: キャンセル")
         } catch APIError.sessionExpired {

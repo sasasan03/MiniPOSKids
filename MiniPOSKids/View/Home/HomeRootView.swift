@@ -11,7 +11,7 @@ struct HomeRootView: View {
     @State private var router = HomeRouter()
     private let authService: AuthService
     private let storeService: StoreServiceProtocol
-    private let storeItemService: StoreItemServiceProtocol
+    private let storeItemService: StoreProductServiceProtocol
 
     // AppStoreからトークンを取得（キーチェーンのリフレッシュトークン）するためのtokenStore。
     // contractId（契約者ID）はapi.smaregi.devのapiを呼び出すために必要
@@ -52,7 +52,7 @@ struct HomeRootView: View {
             StoreListView(viewModel: StoreListViewModel(storeService: storeService))
                 .navigationTitle("登録店舗一覧")
         case .printProductBarcode(let storeId):
-            ProductBarcodeView(viewModel: StoreItemViewModel(storeItemService: storeItemService, storeId: storeId))
+            ProductBarcodeView(viewModel: StoreProductViewModel(storeItemService: storeItemService, storeId: storeId))
                 .navigationTitle("商品バーコード一覧")
         case .selectAvailableBalance:
             SelectAvailableBalanceView()
