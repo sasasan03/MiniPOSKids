@@ -24,7 +24,6 @@ struct StoreService: StoreServiceProtocol {
     }
     
     func fetchStore() async throws -> [StoreResponse] {
-        logger.info("fetchStore: 開始")
         do {
             var allowed = CharacterSet.urlPathAllowed
             // URLを構築するものを許可するが、/は使えない。予約文字禁止させる。
