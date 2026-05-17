@@ -48,10 +48,10 @@ struct StoreItemService: StoreProductServiceProtocol {
                 let product = try Product(dto: item)
                 products.append(product)
             }
-            logger.info("fetchItem: 成功 count=\(itemsResponse.count)")
+            logger.info("fetchStoreItems: 成功 count=\(itemsResponse.count)")
             return products
         } catch {
-            logger.error("fetchItem: 失敗 error=\(error)")
+            logger.error("fetchStoreItems: 失敗 error=\(error)")
             throw error
         }
     }

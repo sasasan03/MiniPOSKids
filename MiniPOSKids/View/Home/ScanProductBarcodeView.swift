@@ -69,13 +69,13 @@ private struct BarcodeScannerCameraView: UIViewControllerRepresentable {
             recognizesMultipleItems: false,
             isHighlightingEnabled: true
         )
+        // context.coordinatorをセットすることで、バーコードを読みとった後の振る舞いを決める
+        dataScannerViewController.delegate = context.coordinator
         do {
             try dataScannerViewController.startScanning()
         } catch {
             scanError = .scannerStartFailed(error)
         }
-        // context.coordinatorをセットすることで、バーコードを読みとった後の振る舞いを決める
-        dataScannerViewController.delegate = context.coordinator
         return dataScannerViewController
     }
 
