@@ -24,6 +24,7 @@ final class CashRegisterViewModel {
     var cartProducts: [CartProduct] = []
     var totalPrice: Int { cartProducts.map(\.totalPrice).reduce(0, +) }
     var errorMessage: String?
+    var onSessionExpired: (() -> Void)?
     
     init(storeItemService: StoreProductServiceProtocol) {
         self.storeItemService = storeItemService
@@ -69,6 +70,11 @@ final class CashRegisterViewModel {
                         logger.info("カートに新しく商品を追加しました。商品名：\(cartProduct.product.name)")
                         return
                     }
+                } catch is CancellationError {
+                    logger.debug("fetchProduct: キャンセル")
+                } catch APIError.sessionExpired {
+                    logger.warning("fetchProduct: セッション期限切れ → ログアウト")
+                    onSessionExpired?()
                 } catch {
                     errorMessage = "スマレジdeveloperから商品情報取得に失敗しました"
                     logger.info("fetchProduct: 失敗 error=\(error)")

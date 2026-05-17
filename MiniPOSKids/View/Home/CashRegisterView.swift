@@ -10,6 +10,7 @@ import SwiftUI
 struct CashRegisterView: View {
     
     @Environment(HomeRouter.self) var router
+    @Environment(AppState.self) private var appState
     @State private var viewModel: CashRegisterViewModel
     let itemId: String? = nil
     
@@ -34,6 +35,9 @@ struct CashRegisterView: View {
                     guard let value = newValue, !value.isEmpty else { return }
                     viewModel.addProduct(barcode: newValue)
                     router.clearScannedBarcode()
+                }
+                .task {
+                    viewModel.onSessionExpired = { appState.logout() }
                 }
                 Spacer()
                 HStack {
@@ -108,6 +112,7 @@ struct CashRegisterView: View {
         )
     )
     .environment(HomeRouter())
+    .environment(AppState(tokenStore: InMemoryTokenStore()))
 }
 
 private struct PreviewStoreItemService: StoreProductServiceProtocol {
