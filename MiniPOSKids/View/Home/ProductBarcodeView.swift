@@ -13,7 +13,7 @@ struct ProductBarcodeView: View {
     
     @Environment(HomeRouter.self) private var router
     @Environment(AppState.self) private var appState
-    @State private var viewModel: StoreItemViewModel
+    @State private var viewModel: StoreProductViewModel
     @State private var pdfURL: URL?
     let columns = [
         GridItem(.flexible(), spacing: 10),
@@ -21,7 +21,7 @@ struct ProductBarcodeView: View {
         GridItem(.flexible(), spacing: 10)
     ]
     
-    init(viewModel: StoreItemViewModel) {
+    init(viewModel: StoreProductViewModel) {
         _viewModel = State(initialValue: viewModel)
     }
     // バーコード関連
@@ -36,9 +36,9 @@ struct ProductBarcodeView: View {
     var body: some View {
         ScrollView {
             LazyVGrid(columns: columns, spacing: 10) {
-                ForEach(viewModel.items, id: \.productId) { item in
-                    BarcodeRow(name: item.productName, price: item.price) {
-                        barcode(id: item.productId)
+                ForEach(viewModel.products, id:\.productID) { product in
+                    BarcodeRow(name: product.name, price: "\(product.price)円") {
+                        barcode(id: product.productID)
                     }
                 }
             }
@@ -58,7 +58,7 @@ struct ProductBarcodeView: View {
                     Button("PDF"){
                         pdfURL = renderPDF()
                     }
-                    .disabled(viewModel.items.isEmpty)
+                    .disabled(viewModel.products.isEmpty)
                 }
             }
         }
@@ -122,20 +122,20 @@ struct ProductBarcodeView: View {
     }
     
     // ページ単位のデータに変換
-    private var pdfPageItemGroups: [[StoreItemResponse]] {
-        stride(from: 0, to: viewModel.items.count, by: pdfItemsPerPage).map { startIndex in
-            let endIndex = min(startIndex + pdfItemsPerPage, viewModel.items.count)
-            return Array(viewModel.items[startIndex..<endIndex])
+    private var pdfPageItemGroups: [[Product]] {
+        stride(from: 0, to: viewModel.products.count, by: pdfItemsPerPage).map { startIndex in
+            let endIndex = min(startIndex + pdfItemsPerPage, viewModel.products.count)
+            return Array(viewModel.products[startIndex..<endIndex])
         }
     }
     
     // 実施にPDF化される画面を構築
-    private func pdfPageContent(items: [StoreItemResponse]) -> some View {
+    private func pdfPageContent(items: [Product]) -> some View {
         VStack(spacing: 0) {
             LazyVGrid(columns: pdfColumns, spacing: pdfGridSpacing) {
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    BarcodeRow(name: item.productName, price: item.price) {
-                        barcode(id: item.productId)
+                    BarcodeRow(name: item.name, price: "\(item.price)円") {
+                        barcode(id: item.productID)
                     }
                     .frame(width: pdfColumnWidth, height: pdfItemHeight)
                 }
@@ -149,7 +149,7 @@ struct ProductBarcodeView: View {
     
     private func renderPDF() -> URL? {
         let url = URL.documentsDirectory.appending(path: "barcodes.pdf")
-        guard !viewModel.items.isEmpty else { return nil }
+        guard !viewModel.products.isEmpty else { return nil }
         
         // ページの区切りをA4サイズにする
         var mediaBox = CGRect(origin: .zero, size: a4PageSize)
@@ -198,7 +198,7 @@ struct ProductBarcodeView: View {
 #Preview {
     NavigationStack {
         ProductBarcodeView(
-            viewModel: StoreItemViewModel(
+            viewModel: StoreProductViewModel(
                 storeItemService: PreviewStoreItemService(), storeId: "1"
             )
         )
@@ -208,24 +208,21 @@ struct ProductBarcodeView: View {
     .environment(AppState(tokenStore: InMemoryTokenStore()))
 }
 
-private struct PreviewStoreItemService: StoreItemServiceProtocol {
-    
-    func fetchStoreItem(storeId: String) async throws -> [StoreItemResponse] {
+private struct PreviewStoreItemService: StoreProductServiceProtocol {
+    func fetchStoreItem(productID: String) async throws -> Product? {
+        return nil
+    }
+
+    func fetchStoreItems(storeId: String) async throws -> [Product] {
         [
-            StoreItemResponse(productId: "1", productName: "コーラ", price: "190"),
-            StoreItemResponse(productId: "2", productName: "ドーナッツ", price: "250"),
-            StoreItemResponse(productId: "3", productName: "アメ", price: "220"),
-            StoreItemResponse(productId: "4", productName: "コーラ", price: "190"),
-            StoreItemResponse(productId: "5", productName: "ドーナッツ", price: "250"),
-            StoreItemResponse(productId: "6", productName: "アメ", price: "220"),
-            StoreItemResponse(productId: "7", productName: "コーラ", price: "190"),
-            StoreItemResponse(productId: "8", productName: "ドーナッツ", price: "250"),
-            StoreItemResponse(productId: "9", productName: "アメ", price: "220"),
-            StoreItemResponse(productId: "10", productName: "アメ", price: "220"),
-            StoreItemResponse(productId: "11", productName: "コーラ", price: "190"),
-            StoreItemResponse(productId: "12", productName: "ドーナッツ", price: "250"),
-            StoreItemResponse(productId: "13", productName: "アメ", price: "220"),
-            StoreItemResponse(productId: "14", productName: "アメ", price: "220"),
+            Product(productID: "1", name: "1", price: 190),
+            Product(productID: "12", name: "2", price: 250),
+            Product(productID: "123", name: "3", price: 220),
+            Product(productID: "1234", name: "4", price: 190),
+            Product(productID: "12345", name: "5", price: 250),
+            Product(productID: "8000002", name: "productID", price: 220),
+            Product(productID: UUID().uuidString, name: "コーラ", price: 190),
+            Product(productID: UUID().uuidString, name: "ドーナッツ", price: 250)
         ]
     }
 }

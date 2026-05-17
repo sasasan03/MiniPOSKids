@@ -11,6 +11,8 @@ import SwiftUI
 @Observable
 final class HomeRouter {
     var path = NavigationPath()
+    /// スキャンしたバーコード情報をCashRegisterViewへ渡すために使用
+    var scannedBarcode: String?
     
     func navigationBack() {
         guard !path.isEmpty else { return }
@@ -25,6 +27,14 @@ final class HomeRouter {
     
     func navigationHomeRoutePush(_ route: HomeRoute) {
         path.append(route)
+    }
+    
+    func saveScannedBarcode(_ barcode: String) {
+        scannedBarcode = barcode
+    }
+    
+    func clearScannedBarcode() {
+        scannedBarcode = nil
     }
     
 }

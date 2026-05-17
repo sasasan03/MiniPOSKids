@@ -10,56 +10,117 @@ import SwiftUI
 struct CashRegisterView: View {
     
     @Environment(HomeRouter.self) var router
+    @Environment(AppState.self) private var appState
+    @State private var viewModel: CashRegisterViewModel
+    let itemId: String? = nil
     
-    private struct Item: Identifiable {
-        let id = UUID()
-        let name: String
-        let price: Int
+    init(viewModel: CashRegisterViewModel) {
+        _viewModel = State(initialValue: viewModel)
     }
-    
-    @State private var items = [
-        Item(name: "りんご", price: 1000),
-        Item(name: "なし", price: 2200)
-    ]
     
     var body: some View {
-        VStack {
-            List {
-                ForEach(items){ item in
-                    HStack {
-                        Text(item.name)
-                        Text("\(item.price)円")
+        ZStack {
+            VStack {
+                List {
+                    ForEach($viewModel.cartProducts, id: \.product.productID){ $product in
+                        receiptRow(
+                            productName: product.product.name,
+                            pieces: product.quantity,
+                            price: product.product.price
+                        )
                     }
                 }
-            }
-            Spacer()
-            HStack {
-                HStack {
-                    Text("合計")
-                    Text("2200円")
+                .listStyle(.grouped)
+                .onChange(of: router.scannedBarcode) { _, newValue in
+                    guard let value = newValue, !value.isEmpty else { return }
+                    viewModel.addProduct(barcode: newValue)
+                    router.clearScannedBarcode()
+                }
+                .task {
+                    viewModel.onSessionExpired = { appState.logout() }
                 }
                 Spacer()
-                Button("商品追加") {
-                    router.navigationHomeRoutePush(.scanProductBarcode)
+                HStack {
+                    totalText(viewModel.totalPrice)
+                    Spacer()
+                    barcodeButton
+                        .padding(.trailing, 5)
                 }
+                .padding()
+                Button(action: {
+                    router.navigationHomeRoutePush(.scanQRCode)
+                }, label: {
+                    Text("支払いを行う")
+                        .font(.system(size: 25))
+                        .frame(width: 300,height: 50)
+                })
+                .overlay(
+                    RoundedRectangle(cornerRadius: 3)
+                        .stroke(.gray, lineWidth: 1)
+                )
             }
-            .padding()
-            Button(action: {
-                router.navigationHomeRoutePush(.scanQRCode)
-            }, label: {
-                Text("支払いを行う")
-                    .frame(width: 300,height: 50)
-                
-            })
-            .overlay(
-                RoundedRectangle(cornerRadius: 3)
-                    .stroke(.gray, lineWidth: 1)
-            )
         }
     }
+    
+    private func receiptRow(productName: String ,pieces: Int ,price: Int) -> some View {
+        HStack {
+            Text(productName)
+                .frame(width: 150, alignment: .leading)
+            Spacer()
+            Text("\(pieces)個 × \(price)円・・\(pieces * price)円")
+        }
+        .frame(maxWidth: .infinity)
+    }
+    
+    private func totalText(_ totalPrice: Int) -> some View {
+        HStack {
+            Text("合計")
+                .font(.system(size: 20, weight: .bold))
+                .padding(.horizontal, 5)
+            Text("\(totalPrice.formatted(.number))円")
+                .font(.system(size: 20, weight: .bold))
+        }
+    }
+    
+    private var barcodeButton: some View {
+        Button {
+            router.navigationHomeRoutePush(.scanProductBarcode)
+        } label: {
+            ZStack{
+                Circle()
+                    .frame(width: 50,height: 50)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 45)
+                            .stroke(Color.blue, lineWidth: 1)
+                    )
+                Image(systemName: "barcode.viewfinder")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 30, height: 30)
+                    .foregroundStyle(Color.white)
+            }
+        }
+
+    }
+    
 }
 
 #Preview {
-    CashRegisterView()
-        .environment(HomeRouter())
+    CashRegisterView(
+        viewModel: CashRegisterViewModel(
+            storeItemService: PreviewStoreItemService()
+        )
+    )
+    .environment(HomeRouter())
+    .environment(AppState(tokenStore: InMemoryTokenStore()))
+}
+
+private struct PreviewStoreItemService: StoreProductServiceProtocol {
+    func fetchStoreItem(productID: String) async throws -> Product? {
+        nil
+    }
+
+    func fetchStoreItems(storeId: String) async throws -> [Product] {
+        []
+    }
 }

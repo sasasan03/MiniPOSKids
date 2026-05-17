@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct StoreItemResponse: Decodable {
-    let productId: String
-    let productName: String
-    let price: String
+struct Product {
+    let productID: String
+    let name: String
+    let price: Int
 }
