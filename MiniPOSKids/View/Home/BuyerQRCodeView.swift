@@ -44,15 +44,8 @@ struct BuyerQRCodeView: View {
         guard price > 0 else { return nil }
         let context = CIContext()
         let qrCodeGenerator = CIFilter.qrCodeGenerator()
-        // 数値だけではQRコードがシンプルになるため、余分なデータを持たせQRCodeっぽさを出している。（見栄えが良くなる）
-        let payload: [String: Any] = [
-            "amount": price,
-            "currency": "JPY",
-            "timestamp": Date().timeIntervalSince1970,
-            "transactionId": UUID().uuidString
-        ]
-        guard let jsonData = try? JSONSerialization.data(withJSONObject: payload) else { return nil }
-        qrCodeGenerator.message = jsonData
+        guard let strPriceDate = String(price).data(using: .ascii) else { return nil }
+        qrCodeGenerator.message = strPriceDate
         qrCodeGenerator.correctionLevel = "H"
         guard let outputImage = qrCodeGenerator.outputImage?
                 .transformed(by: CGAffineTransform(scaleX: 10, y: 10)),

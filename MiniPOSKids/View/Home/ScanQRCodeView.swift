@@ -9,9 +9,12 @@ import SwiftUI
 
 struct ScanQRCodeView: View {
     @Environment(HomeRouter.self) var router
+    @State private var scanError: ScanProductBarcodeError?
+    @State private var scannedPayload = ""
+    @State private var hasHandledScan = false
+    
     var body: some View {
         ZStack {
-            Color.black
             VStack {
                 Button {
                     router.navigationHomeRoutePush(.purchaseSuccess)
