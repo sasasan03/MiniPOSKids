@@ -6,26 +6,60 @@
 //
 
 import SwiftUI
+import VisionKit
+import Vision
 
 struct ScanQRCodeView: View {
     @Environment(HomeRouter.self) var router
     @State private var scanError: ScanProductBarcodeError?
     @State private var scannedPayload = ""
     @State private var hasHandledScan = false
+    let totalAmount: Int
     
     var body: some View {
         ZStack {
-            VStack {
-                Button {
-                    router.navigationHomeRoutePush(.purchaseSuccess)
-                } label: {
-                    Text("読み取り成功")
+            BarcodeScannerCameraView(
+                symbologies: [.qr],
+                recognizedPayload: $scannedPayload,
+                scanError: $scanError
+            )
+                .onChange(of: scannedPayload) { _, newValue in
+                    guard !hasHandledScan, !newValue.isEmpty, let qrCodeValue = Int(newValue) else { return }
+                    hasHandledScan = true
+                    if totalAmount < qrCodeValue {
+                        router.navigationHomeRoutePush(.purchaseSuccess(totalAmount,qrCodeValue))
+                    } else {
+                        router.navigationHomeRoutePush(.purchaseFailure(totalAmount,qrCodeValue))
+                    }
                 }
-                
-                Button {
-                    router.navigationHomeRoutePush(.purchaseFailure)
-                } label: {
-                    Text("読み取り失敗")
+        }
+        .task {
+            if !DataScannerViewController.isSupported {
+                scanError = .scannerUnsupported
+            } else if !DataScannerViewController.isAvailable {
+                scanError = .scannerUnavailable
+            }
+        }
+        .alert(
+            scanError?.errorDescription ?? "",
+            isPresented: Binding(
+                get: { scanError != nil },
+                set: { if !$0 { scanError = nil } }
+            ),
+            presenting: scanError
+        ) { error in
+            switch error {
+            case .emptyPayload:
+                Button("再試行") {
+                    scannedPayload = ""
+                    hasHandledScan = false
+                }
+                Button("レジ画面へ戻る", role: .cancel) {
+                    router.navigationBack()
+                }
+            case .scannerUnsupported, .scannerUnavailable, .scannerStartFailed:
+                Button("レジ画面へ戻る", role: .cancel) {
+                    router.navigationBack()
                 }
             }
         }
@@ -33,6 +67,6 @@ struct ScanQRCodeView: View {
 }
 
 #Preview {
-    ScanQRCodeView()
+    ScanQRCodeView(totalAmount: 3000)
         .environment(HomeRouter())
 }
