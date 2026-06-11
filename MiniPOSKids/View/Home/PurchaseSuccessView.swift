@@ -22,6 +22,9 @@ struct PurchaseSuccessView: View {
         Item(name: "なし", price: 2200)
     ]
     
+    let totalAmount: Int
+    let QrCodeValue: Int
+    
     var body: some View {
         VStack(spacing: 30) {
             Spacer()
@@ -47,6 +50,6 @@ struct PurchaseSuccessView: View {
 }
 
 #Preview {
-    PurchaseSuccessView()
+    PurchaseSuccessView(totalAmount: 3000, QrCodeValue: 3000)
         .environment(HomeRouter())
 }

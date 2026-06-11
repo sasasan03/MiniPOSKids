@@ -66,14 +66,14 @@ struct HomeRootView: View {
         case .scanProductBarcode:
             ScanProductBarcodeView()
                 .navigationTitle("バーコード読み取り画面")
-        case .scanQRCode:
-            ScanQRCodeView()
+        case .scanQRCode(let totalAmount):
+            ScanQRCodeView(totalAmount: totalAmount)
                 .navigationTitle("QRコード読み取り画面")
-        case .purchaseSuccess:
-            PurchaseSuccessView()
+        case .purchaseSuccess(let totalAmount, let QrCodeValue):
+            PurchaseSuccessView(totalAmount: totalAmount, QrCodeValue: QrCodeValue)
                 .navigationTitle("支払い完了")
-        case .purchaseFailure:
-            PurchaseFailureView()
+        case .purchaseFailure(let totalAmount, let QrCodeValue):
+            PurchaseFailureView(totalAmount: totalAmount, QrCodeValue: QrCodeValue)
                 .navigationTitle("支払い失敗")
         }
     }

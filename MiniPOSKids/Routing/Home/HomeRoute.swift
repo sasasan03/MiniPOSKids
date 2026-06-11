@@ -15,7 +15,7 @@ enum HomeRoute: Hashable {
     case showBuyerQRCode(Int)
     case cashRegister
     case scanProductBarcode
-    case scanQRCode
-    case purchaseSuccess
-    case purchaseFailure
+    case scanQRCode(Int)
+    case purchaseSuccess(Int, Int)
+    case purchaseFailure(Int, Int)
 }
