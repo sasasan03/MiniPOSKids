@@ -12,12 +12,6 @@ import OSLog
 @Observable
 final class CashRegisterViewModel {
     
-    struct CartProduct {
-        var totalPrice: Int { product.price * quantity }
-        let product: Product
-        var quantity: Int
-    }
-    
     private let logger = Logger(subsystem: "com.sako0602.MiniPOSKids", category: "CashRegisterViewModel")
     private let storeItemService: StoreProductServiceProtocol
     
