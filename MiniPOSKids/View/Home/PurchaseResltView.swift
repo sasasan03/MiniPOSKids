@@ -8,7 +8,7 @@
 import SwiftUI
 
 // TODO: １．購入する商品情報を取得。２．購入後の残金の計算
-struct PurchaseResltView: View {
+struct PurchaseResultView: View {
     
     @Environment(HomeRouter.self) var router
     @State private var viewModel: PurchaseViewModel
@@ -52,7 +52,7 @@ struct PurchaseResltView: View {
 }
 
 #Preview {
-    PurchaseResltView(
+    PurchaseResultView(
         viewModel: PurchaseViewModel(
             cartProducts: [
                 CartProduct(product: Product(productID: "1", name: "りんご", price: 1000), quantity: 2)

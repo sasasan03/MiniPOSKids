@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeRootView: View {
     @State private var router = HomeRouter()
+    
     private let authService: AuthService
     private let storeService: StoreServiceProtocol
     private let storeItemService: StoreProductServiceProtocol
@@ -66,15 +67,23 @@ struct HomeRootView: View {
         case .scanProductBarcode:
             ScanProductBarcodeView()
                 .navigationTitle("バーコード読み取り画面")
-        case .scanQRCode(let totalAmount):
-            ScanQRCodeView(totalAmount: totalAmount)
+        case .scanQRCode(let totalAmount, let cartProducts):
+            ScanQRCodeView(totalAmount: totalAmount, cartProducts: cartProducts)
                 .navigationTitle("QRコード読み取り画面")
-        case .purchaseSuccess(let totalAmount, let QrCodeValue):
-            PurchaseSuccessView(totalAmount: totalAmount, QrCodeValue: QrCodeValue)
-                .navigationTitle("支払い完了")
-        case .purchaseFailure(let totalAmount, let QrCodeValue):
-            PurchaseFailureView(totalAmount: totalAmount, QrCodeValue: QrCodeValue)
-                .navigationTitle("支払い失敗")
+        case .purchaseResult(
+            let isSuccess,
+            let totalAmount,
+            let qrCodeValue,
+            let cartProducts
+        ):
+            PurchaseResultView(
+                viewModel: PurchaseViewModel(
+                    cartProducts: cartProducts,
+                    totalAmount: totalAmount,
+                    qrCodeValue: qrCodeValue
+                ),
+                isSuccess: isSuccess
+            )
         }
     }
 }
