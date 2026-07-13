@@ -48,7 +48,7 @@ struct CashRegisterView: View {
                 }
                 .padding()
                 Button(action: {
-                    router.navigationHomeRoutePush(.scanQRCode)
+                    router.navigationHomeRoutePush(.scanQRCode(viewModel.totalPrice, viewModel.cartProducts))
                 }, label: {
                     Text("支払いを行う")
                         .font(.system(size: 25))

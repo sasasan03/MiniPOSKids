@@ -17,7 +17,11 @@ struct ScanProductBarcodeView: View {
 
     var body: some View {
         ZStack {
-            BarcodeScannerCameraView(recognizedPayload: $scannedPayload, scanError: $scanError)
+            BarcodeScannerCameraView(
+                symbologies: [.code128],
+                recognizedPayload: $scannedPayload,
+                scanError: $scanError
+            )
                 .onChange(of: scannedPayload) { _, newValue in
                     guard !hasHandledScan, !newValue.isEmpty else { return }
                     hasHandledScan = true
@@ -58,57 +62,6 @@ struct ScanProductBarcodeView: View {
     }
 }
 
-private struct BarcodeScannerCameraView: UIViewControllerRepresentable {
-
-    @Binding var recognizedPayload: String
-    @Binding var scanError: ScanProductBarcodeError?
-
-    func makeUIViewController(context: Context) -> some DataScannerViewController {
-        let dataScannerViewController = DataScannerViewController(
-            recognizedDataTypes: [.barcode(symbologies: [.code128])],
-            recognizesMultipleItems: false,
-            isHighlightingEnabled: true
-        )
-        // context.coordinatorをセットすることで、バーコードを読みとった後の振る舞いを決める
-        dataScannerViewController.delegate = context.coordinator
-        do {
-            try dataScannerViewController.startScanning()
-        } catch {
-            scanError = .scannerStartFailed(error)
-        }
-        return dataScannerViewController
-    }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    final class Coordinator: NSObject, DataScannerViewControllerDelegate {
-        private let parent: BarcodeScannerCameraView
-
-        init(_ parent: BarcodeScannerCameraView) {
-            self.parent = parent
-        }
-
-        // スキャナがアイテムの認識を開始
-        func dataScanner(_ dataScanner: DataScannerViewController, didAdd addedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            guard case .barcode(let barcode) = addedItems.first else { return }
-            if let payloadStringValue = barcode.payloadStringValue {
-                parent.recognizedPayload = payloadStringValue
-            } else {
-                parent.scanError = .emptyPayload
-            }
-        }
-
-        // スキャナの認識停止
-        func dataScanner(_ dataScanner: DataScannerViewController, didRemove removedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            parent.recognizedPayload = ""
-        }
-
-    }
-
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {}
-}
 
 #Preview {
     ScanProductBarcodeView()
