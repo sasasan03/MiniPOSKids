@@ -40,6 +40,10 @@ struct BuyerQRCodeView: View {
         }
     }
     
+    // TODO: 現状は価格の数値をそのまま QR に載せているため、発行元や取引識別子を検証できない。
+    // 過去のスクショや外部で生成した数値 QR でも、数値が十分大きければ購入成功になってしまう。
+    // 固定プレフィックス付きの構造化ペイロード（エンコード/デコードを共有する型）に戻し、
+    // 読み取り側（ScanQRCodeView）でもフォーマット検証を入れる。
     private func makeQRCode(price: Int) -> UIImage? {
         guard price > 0 else { return nil }
         let context = CIContext()

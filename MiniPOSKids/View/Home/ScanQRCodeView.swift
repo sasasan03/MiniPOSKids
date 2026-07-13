@@ -28,11 +28,14 @@ struct ScanQRCodeView: View {
             .onChange(of: scannedPayload) {
                 _,
                 newValue in
+                // TODO: Int(newValue) だけで受理しているため、発行元や取引識別子を検証できない。
+                // 外部で生成された数値 QR でも購入成功になってしまうので、
+                // 固定プレフィックス付きの構造化ペイロードにしてフォーマット検証を入れる（BuyerQRCodeView 側と対応）。
                 guard !hasHandledScan,
                       !newValue.isEmpty,
                       let qrCodeValue = Int(newValue) else { return }
                 hasHandledScan = true
-                if totalAmount < qrCodeValue {
+                if totalAmount <= qrCodeValue {
                     router.navigationHomeRoutePush(
                         .purchaseResult(
                             true,

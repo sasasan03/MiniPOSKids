@@ -56,7 +56,7 @@ struct BarcodeScannerCameraView: UIViewControllerRepresentable {
 
         // スキャナの認識停止
         func dataScanner(_ dataScanner: DataScannerViewController, didRemove removedItems: [RecognizedItem], allItems: [RecognizedItem]) {
-            parent.recognizedPayload = ""
+            // 親ビューが処理、リセットのタイミングを管理する
         }
 
     }
