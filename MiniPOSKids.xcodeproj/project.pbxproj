@@ -29,6 +29,7 @@
 		6998AFDA2F9335CF00001CEB /* Token.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFD92F9335CF00001CEB /* Token.swift */; };
 		6998AFDD2F9336CA00001CEB /* InMemoryTokenStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFDC2F9336CA00001CEB /* InMemoryTokenStore.swift */; };
 		6998AFE12F934D000001CEB0 /* TokenRefresherProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFE02F934D000001CEB0 /* TokenRefresherProtocol.swift */; };
+		69B547A0300D9D1000A0D1DF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 69B5479F300D9D1000A0D1DF /* PrivacyInfo.xcprivacy */; };
 		69BA5F262F8F5F3C00FF3C71 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */; };
 		69BA5F2C2F8F60BD00FF3C71 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */; };
 		69BA5F2E2F8F62FF00FF3C71 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F2D2F8F62FF00FF3C71 /* APIError.swift */; };
@@ -97,6 +98,7 @@
 		6998AFD92F9335CF00001CEB /* Token.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Token.swift; sourceTree = "<group>"; };
 		6998AFDC2F9336CA00001CEB /* InMemoryTokenStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryTokenStore.swift; sourceTree = "<group>"; };
 		6998AFE02F934D000001CEB0 /* TokenRefresherProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRefresherProtocol.swift; sourceTree = "<group>"; };
+		69B5479F300D9D1000A0D1DF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
 		69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		69BA5F2D2F8F62FF00FF3C71 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
@@ -280,6 +282,7 @@
 				6905083E2F95D86500D63482 /* Secrets.xcconfig.example */,
 				693B76292F873FD80078FCAD /* MiniPOSKids */,
 				693B76252F873FD80078FCAD /* Assets.xcassets */,
+				69B5479F300D9D1000A0D1DF /* PrivacyInfo.xcprivacy */,
 				697E5F442F84D5B3008C8E1D /* MiniPOSKidsTests */,
 				697E5F4E2F84D5B3008C8E1D /* MiniPOSKidsUITests */,
 				697E5F352F84D5B0008C8E1D /* Products */,
@@ -461,6 +464,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				69B547A0300D9D1000A0D1DF /* PrivacyInfo.xcprivacy in Resources */,
 				693B762A2F873FD80078FCAD /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
