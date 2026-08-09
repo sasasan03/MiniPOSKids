@@ -27,7 +27,15 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
     private var accessTokenExpiry: Date?
 
     private static var clientId: String { AppConfig.smaregiClientId }
+    private static var clientSecret: String { AppConfig.smaregiClientSecret }
     private static var redirectUri: String { AppConfig.oauthRedirectURI }
+
+    /// `client_id` / `client_secret` を符号化する際に許可する文字（"-._~" のみ追加）
+    private static let formURLEncodedAllowed: CharacterSet = {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return allowed
+    }()
 
     init(
         apiClient: APIClientProtocol,
@@ -52,7 +60,7 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
                 path: "/authorize/token",
                 method: .post,
                 formParams: params,
-                headers: [:]
+                headers: ["Authorization": Self.basicAuthorizationHeader()]
             )
             tokenStore.save(refreshToken: tokenResponse.refreshToken)
             cacheAccessToken(tokenResponse.accessToken, expiresIn: tokenResponse.expiresIn)
@@ -85,7 +93,7 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
                 path: "/authorize/token",
                 method: .post,
                 formParams: params,
-                headers: [:]
+                headers: ["Authorization": Self.basicAuthorizationHeader()]
             )
             let usedNewRefreshToken = tokenResponse.refreshToken != nil
             tokenStore.save(refreshToken: tokenResponse.refreshToken ?? currentRefreshToken)
@@ -111,6 +119,25 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol {
     }
 
     // MARK: - Private
+
+    /// トークンエンドポイント向けの HTTP Basic 認証ヘッダーを組み立てる。
+    ///
+    /// スマレジのトークンエンドポイントはクライアント認証を必須とし、無いと
+    /// `invalid_client` で 401 を返す。RFC 6749 §2.3.1 に従い、`client_id` と
+    /// `client_secret` をそれぞれフォーム URL エンコードしてから `:` で連結し、
+    /// 全体を base64 で符号化する。
+    ///
+    /// - Returns: `Authorization` ヘッダーに設定する `Basic ...` 形式の文字列。
+    private static func basicAuthorizationHeader() -> String {
+        let encodedId = clientId.addingPercentEncoding(
+            withAllowedCharacters: formURLEncodedAllowed
+        ) ?? clientId
+        let encodedSecret = clientSecret.addingPercentEncoding(
+            withAllowedCharacters: formURLEncodedAllowed
+        ) ?? clientSecret
+        let credentials = Data("\(encodedId):\(encodedSecret)".utf8).base64EncodedString()
+        return "Basic \(credentials)"
+    }
 
     private func cacheAccessToken(_ token: String, expiresIn: Int) {
         cachedAccessToken = token
