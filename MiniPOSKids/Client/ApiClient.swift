@@ -209,7 +209,7 @@ final class APIClient: APIClientProtocol {
             }
             logger.debug("sendForm: ← \(httpResponse.statusCode) \(path, privacy: .public)")
             guard 200...299 ~= httpResponse.statusCode else {
-                logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public)")
+                logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .private)")
                 throw APIError.statusCode(httpResponse.statusCode, data)
             }
 
@@ -232,6 +232,21 @@ final class APIClient: APIClientProtocol {
     }
 
     // MARK: - Private
+
+    /// エラーレスポンスのボディをログ出力用の文字列へ変換する。
+    ///
+    /// OAuth のエラーは `{"error":"...","error_description":"..."}` のような JSON で
+    /// 返るため、原因の切り分けにはステータスコードだけでなく本文が要る。
+    /// バイナリなど UTF-8 で解釈できない場合はバイト数のみを返す。
+    ///
+    /// - Parameter data: レスポンスボディ。
+    /// - Returns: ログに載せる文字列。
+    private static func errorBodyText(_ data: Data) -> String {
+        guard let text = String(data: data, encoding: .utf8), !text.isEmpty else {
+            return "<\(data.count) bytes>"
+        }
+        return text
+    }
 
     private func buildURL(path: String) -> URL? {
         let normalizedBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
@@ -270,7 +285,7 @@ final class APIClient: APIClientProtocol {
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
-            logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public)")
+            logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .private)")
             throw APIError.statusCode(httpResponse.statusCode, data)
         }
 
