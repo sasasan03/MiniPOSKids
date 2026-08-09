@@ -209,7 +209,11 @@ final class APIClient: APIClientProtocol {
             }
             logger.debug("sendForm: ← \(httpResponse.statusCode) \(path, privacy: .public)")
             guard 200...299 ~= httpResponse.statusCode else {
-                logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .private)")
+                #if DEBUG
+                logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .public)")
+                #else
+                logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public)")
+                #endif
                 throw APIError.statusCode(httpResponse.statusCode, data)
             }
 
@@ -285,7 +289,11 @@ final class APIClient: APIClientProtocol {
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
-            logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .private)")
+            #if DEBUG
+            logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .public)")
+            #else
+            logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public)")
+            #endif
             throw APIError.statusCode(httpResponse.statusCode, data)
         }
 
