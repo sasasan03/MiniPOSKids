@@ -25,6 +25,14 @@ enum AppConfig {
     }
 
 
+    /// `ASWebAuthenticationSession` がコールバックとして待ち受けるスキーム。
     static let oauthCallbackScheme = "miniposkids"
-    static let oauthRedirectURI    = "miniposkids://callback"
+
+    /// 認可サーバーに登録済みのリダイレクト URI。
+    ///
+    /// スマレジの開発環境はリダイレクト URI に `http://` 始まりの文字列か
+    /// `urn:ietf:wg:oauth:2.0:oob` しか登録できず、カスタムスキームを直接指定できない。
+    /// そのため https の中継ページで認可コードを受け、そこから
+    /// `miniposkids://callback` へ転送してアプリに戻す。
+    static let oauthRedirectURI    = "https://sasasan03.github.io/miniposkids/callback.html"
 }
