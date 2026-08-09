@@ -130,7 +130,9 @@ final class LoginViewModel {
 
         // MARK: ⑧ セッション開始
         session.presentationContextProvider = presentationContext
-        session.prefersEphemeralWebBrowserSession = false
+        // Safari の既存 Cookie を共有すると、意図しないスマレジアカウントで
+        // 認可が通ってしまうため、毎回まっさらな状態でログインさせる。
+        session.prefersEphemeralWebBrowserSession = true
         webAuthSession = session
         guard session.start() else {
             webAuthSession = nil
