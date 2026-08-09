@@ -237,6 +237,7 @@ final class APIClient: APIClientProtocol {
 
     // MARK: - Private
 
+    private static let maxLoggedBodyBytes = 2048
     /// エラーレスポンスのボディをログ出力用の文字列へ変換する。
     ///
     /// OAuth のエラーは `{"error":"...","error_description":"..."}` のような JSON で
@@ -246,10 +247,11 @@ final class APIClient: APIClientProtocol {
     /// - Parameter data: レスポンスボディ。
     /// - Returns: ログに載せる文字列。
     private static func errorBodyText(_ data: Data) -> String {
-        guard let text = String(data: data, encoding: .utf8), !text.isEmpty else {
-            return "<\(data.count) bytes>"
-        }
-        return text
+        guard !data.isEmpty else { return "<empty>" }
+        let isTruncated = data.count > maxLoggedBodyBytes
+        let slice = isTruncated ? data.prefix(maxLoggedBodyBytes) : data
+        let text = String(decoding: slice, as: UTF8.self)
+        return isTruncated ? "\(text)…<truncated, total \(data.count) bytes>" : text
     }
 
     private func buildURL(path: String) -> URL? {
