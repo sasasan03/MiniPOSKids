@@ -209,7 +209,11 @@ final class APIClient: APIClientProtocol {
             }
             logger.debug("sendForm: ← \(httpResponse.statusCode) \(path, privacy: .public)")
             guard 200...299 ~= httpResponse.statusCode else {
+                #if DEBUG
+                logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .public)")
+                #else
                 logger.error("sendForm: エラーステータス \(httpResponse.statusCode) \(path, privacy: .public)")
+                #endif
                 throw APIError.statusCode(httpResponse.statusCode, data)
             }
 
@@ -232,6 +236,23 @@ final class APIClient: APIClientProtocol {
     }
 
     // MARK: - Private
+
+    private static let maxLoggedBodyBytes = 2048
+    /// エラーレスポンスのボディをログ出力用の文字列へ変換する。
+    ///
+    /// OAuth のエラーは `{"error":"...","error_description":"..."}` のような JSON で
+    /// 返るため、原因の切り分けにはステータスコードだけでなく本文が要る。
+    /// バイナリなど UTF-8 で解釈できない場合はバイト数のみを返す。
+    ///
+    /// - Parameter data: レスポンスボディ。
+    /// - Returns: ログに載せる文字列。
+    private static func errorBodyText(_ data: Data) -> String {
+        guard !data.isEmpty else { return "<empty>" }
+        let isTruncated = data.count > maxLoggedBodyBytes
+        let slice = isTruncated ? data.prefix(maxLoggedBodyBytes) : data
+        let text = String(decoding: slice, as: UTF8.self)
+        return isTruncated ? "\(text)…<truncated, total \(data.count) bytes>" : text
+    }
 
     private func buildURL(path: String) -> URL? {
         let normalizedBase = baseURL.hasSuffix("/") ? String(baseURL.dropLast()) : baseURL
@@ -270,7 +291,11 @@ final class APIClient: APIClientProtocol {
         }
 
         guard 200...299 ~= httpResponse.statusCode else {
+            #if DEBUG
+            logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public) body=\(Self.errorBodyText(data), privacy: .public)")
+            #else
             logger.error("performRequest: エラーステータス \(httpResponse.statusCode) \(method.rawValue, privacy: .public) \(path, privacy: .public)")
+            #endif
             throw APIError.statusCode(httpResponse.statusCode, data)
         }
 
