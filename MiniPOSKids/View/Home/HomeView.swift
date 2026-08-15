@@ -23,6 +23,15 @@ struct HomeView: View {
                 router.navigationHomeRoutePush(.cashRegister)
             }
         }
+        .toolbar {
+            ToolbarItem(
+                content: {
+                    Button("設定", systemImage: "gearshape.fill", action: {
+                        router.navigationHomeRoutePush(.setting)
+                    })
+                }
+            )
+        }
     }
 }
 

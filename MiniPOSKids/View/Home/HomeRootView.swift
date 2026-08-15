@@ -49,6 +49,9 @@ struct HomeRootView: View {
         switch route {
         case .home:
             HomeView()
+        case .setting:
+            SettingView(viewModel: SettingViewModel())
+                .navigationTitle("設定")
         case .storeList:
             StoreListView(viewModel: StoreListViewModel(storeService: storeService))
                 .navigationTitle("登録店舗一覧")
@@ -90,4 +93,5 @@ struct HomeRootView: View {
 
 #Preview {
     HomeRootView(tokenStore: InMemoryTokenStore(), contractId: "preview_contract_id")
+        .environment(AppState())
 }
