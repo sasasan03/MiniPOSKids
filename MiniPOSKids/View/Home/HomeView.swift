@@ -26,7 +26,7 @@ struct HomeView: View {
         .toolbar {
             ToolbarItem(
                 content: {
-                    Button("setting", systemImage: "gearshape.fill", action: {
+                    Button("設定", systemImage: "gearshape.fill", action: {
                         router.navigationHomeRoutePush(.setting)
                     })
                 }
