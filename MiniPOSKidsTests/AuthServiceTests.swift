@@ -48,7 +48,7 @@ final class MockTokenStore: TokenStoreProtocol {
 // MARK: - Helpers
 
 private func makeTokenResponse(
-    accessToken: String = "test-token",
+    accessToken: String = makeJWT(),
     refreshToken: String? = "test-refresh-token"
 ) -> TokenResponse {
     TokenResponse(accessToken: accessToken, tokenType: "Bearer", expiresIn: 3600, refreshToken: refreshToken)
@@ -71,18 +71,19 @@ struct AuthServiceTests {
 
     @Test func exchangeToken_success_returnsTokenResponse() async throws {
         let (sut, client, _) = makeSUT()
-        client.sendFormResponse = makeTokenResponse(accessToken: "abc123")
+        let accessToken = makeJWT()
+        client.sendFormResponse = makeTokenResponse(accessToken: accessToken)
 
         let result = try await sut.exchangeToken(code: "auth-code", codeVerifier: "verifier")
 
-        #expect(result.accessToken == "abc123")
+        #expect(result.accessToken == accessToken)
         #expect(result.tokenType == "Bearer")
         #expect(result.expiresIn == 3600)
     }
 
     @Test func exchangeToken_success_storesRefreshToken() async throws {
         let (sut, client, store) = makeSUT()
-        client.sendFormResponse = makeTokenResponse(accessToken: "stored-token", refreshToken: "stored-refresh")
+        client.sendFormResponse = makeTokenResponse(refreshToken: "stored-refresh")
 
         _ = try await sut.exchangeToken(code: "auth-code", codeVerifier: "verifier")
 
@@ -147,11 +148,12 @@ struct AuthServiceTests {
     @Test func refreshAccessToken_success_returnsAccessTokenAndStoresNewRefreshToken() async throws {
         let (sut, client, store) = makeSUT()
         store.refreshToken = "existing-refresh"
-        client.sendFormResponse = makeTokenResponse(accessToken: "new-access", refreshToken: "new-refresh")
+        let newAccessToken = makeJWT()
+        client.sendFormResponse = makeTokenResponse(accessToken: newAccessToken, refreshToken: "new-refresh")
 
         let accessToken = try await sut.refreshAccessToken()
 
-        #expect(accessToken == "new-access")
+        #expect(accessToken == newAccessToken)
         #expect(store.refreshToken == "new-refresh")
     }
 
@@ -170,7 +172,7 @@ struct AuthServiceTests {
     @Test func refreshAccessToken_keepsExistingRefreshToken_whenServerDoesNotReturnNewOne() async throws {
         let (sut, client, store) = makeSUT()
         store.refreshToken = "original-refresh"
-        client.sendFormResponse = makeTokenResponse(accessToken: "new-access", refreshToken: nil)
+        client.sendFormResponse = makeTokenResponse(refreshToken: nil)
 
         _ = try await sut.refreshAccessToken()
 
@@ -224,5 +226,71 @@ struct AuthServiceTests {
         }
 
         #expect(store.refreshToken == nil)
+    }
+
+    // MARK: 契約ID
+
+    @Test func exchangeToken_success_extractsContractIdFromAccessToken() async throws {
+        let (sut, client, _) = makeSUT()
+        client.sendFormResponse = makeTokenResponse(accessToken: makeJWT(sub: "sb_contract1:user1"))
+
+        _ = try await sut.exchangeToken(code: "code", codeVerifier: "verifier")
+
+        #expect(sut.contractId == "sb_contract1")
+    }
+
+    @Test func exchangeToken_accessTokenWithoutContractId_throwsMissingContractId() async throws {
+        let (sut, client, store) = makeSUT()
+        client.sendFormResponse = makeTokenResponse(accessToken: "not-a-jwt")
+
+        do {
+            _ = try await sut.exchangeToken(code: "code", codeVerifier: "verifier")
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .missingContractId = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
+        // 契約IDを取り出せないトークンではログイン済みの状態を作らない
+        #expect(store.refreshToken == nil)
+        #expect(sut.contractId == nil)
+    }
+
+    @Test func currentContractId_returnsContractIdResolvedByRefresh() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "existing-refresh"
+        client.sendFormResponse = makeTokenResponse(accessToken: makeJWT(sub: "sb_contract2:user2"))
+
+        let contractId = try await sut.currentContractId()
+
+        #expect(contractId == "sb_contract2")
+    }
+
+    @Test func currentContractId_withoutSession_throwsSessionExpired() async throws {
+        let (sut, _, _) = makeSUT()
+
+        do {
+            _ = try await sut.currentContractId()
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .sessionExpired = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
+    }
+
+    @Test func currentContractId_whenTokenHasNoContractId_throwsMissingContractId() async throws {
+        let (sut, client, store) = makeSUT()
+        store.refreshToken = "existing-refresh"
+        client.sendFormResponse = makeTokenResponse(accessToken: "not-a-jwt")
+
+        do {
+            _ = try await sut.currentContractId()
+            Issue.record("エラーがスローされるべきでした")
+        } catch let error as APIError {
+            guard case .missingContractId = error else {
+                Issue.record("想定外のAPIErrorケース: \(error)"); return
+            }
+        }
     }
 }

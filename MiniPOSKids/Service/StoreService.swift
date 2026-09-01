@@ -15,21 +15,18 @@ protocol StoreServiceProtocol {
 struct StoreService: StoreServiceProtocol {
 
     private let apiClient: APIClientProtocol
-    private let contractId: String
+    private let contractIdProvider: any ContractIdProviding
     private let logger = Logger(subsystem: "com.miniposkids.stores", category: "StoreService")
 
-    init(apiClient: APIClientProtocol, contractId: String) {
+    init(apiClient: APIClientProtocol, contractIdProvider: any ContractIdProviding) {
         self.apiClient = apiClient
-        self.contractId = contractId
+        self.contractIdProvider = contractIdProvider
     }
     
     func fetchStore() async throws -> [StoreResponse] {
         do {
-            var allowed = CharacterSet.urlPathAllowed
-            // URLを構築するものを許可するが、/は使えない。予約文字禁止させる。
-            allowed.remove(charactersIn: "/")
-            // 除外された文字を使った場合「%〜〜」の形の文字列にして返される
-            let encodedContractId = contractId.addingPercentEncoding(withAllowedCharacters: allowed) ?? contractId
+            // 契約IDはログイン時のアクセストークンから決まるため、リクエストごとに取得する。
+            let encodedContractId = try await contractIdProvider.currentContractId().percentEncodedPathComponent
             let storeResponses: [StoreResponse] = try await apiClient.send(
                 path: "/\(encodedContractId)/pos/stores?limit=1000&sort=storeId:asc",
                 method: .get,

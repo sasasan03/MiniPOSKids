@@ -16,6 +16,8 @@ enum APIError: Error, LocalizedError {
     case networkError(Error)
     /// アクセストークンもリフレッシュトークンも失効している
     case sessionExpired
+    /// アクセストークンから契約IDを取り出せない
+    case missingContractId
 
     var errorDescription: String? {
         switch self {
@@ -33,6 +35,8 @@ enum APIError: Error, LocalizedError {
             return "通信エラー: \(error.localizedDescription)"
         case .sessionExpired:
             return "セッションの有効期限が切れました。再度ログインしてください。"
+        case .missingContractId:
+            return "契約情報を取得できませんでした。再度ログインしてください。"
         }
     }
 }
