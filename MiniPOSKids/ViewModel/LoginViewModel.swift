@@ -69,8 +69,11 @@ final class LoginViewModel {
         pendingState = state
 
         // MARK: ③ Safari で認可画面を表示し、認可コードを受け取るセッションを構築
+        let authURL = buildAuthURL(codeChallenge: codeChallenge, state: state)
+        // invalid_client の切り分け用。実際に送っている client_id / redirect_uri を管理画面の登録値と突き合わせる。
+        logger.info("login: 認可URL=\(authURL.absoluteString, privacy: .public)")
         let session = ASWebAuthenticationSession(
-            url: buildAuthURL(codeChallenge: codeChallenge, state: state),
+            url: authURL,
             callbackURLScheme: AppConfig.oauthCallbackScheme
         ) { [weak self] callbackURL, error in
             // @Observable のプロパティ変更はすべて MainActor で実行する
@@ -182,7 +185,7 @@ final class LoginViewModel {
     }
 
     private func buildAuthURL(codeChallenge: String, state: String) -> URL {
-        var components = URLComponents(string: "https://id.smaregi.dev/authorize")!
+        var components = URLComponents(string: AppConfig.authorizeURL)!
         components.queryItems = [
             URLQueryItem(name: "response_type",          value: "code"),
             URLQueryItem(name: "client_id",              value: AppConfig.smaregiClientId),

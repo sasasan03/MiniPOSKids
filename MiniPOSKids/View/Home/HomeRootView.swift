@@ -15,17 +15,17 @@ struct HomeRootView: View {
     private let storeItemService: StoreProductServiceProtocol
 
     // AppStoreからトークンを取得（キーチェーンのリフレッシュトークン）するためのtokenStore。
-    // contractId（契約者ID）はapi.smaregi.devのapiを呼び出すために必要
+    // contractId（契約者ID）はプラットフォームAPIを呼び出すために必要
     init(
         tokenStore: TokenStoreProtocol,
         contractId: String = AppConfig.smaregiContractId
     ) {
         // 認証取得用APIClient
-        let authApiClient = APIClient(baseURL: "https://id.smaregi.dev")
+        let authApiClient = APIClient(baseURL: AppConfig.idBaseURL)
         let authService = AuthService(apiClient: authApiClient, tokenStore: tokenStore)
 
         // 店舗・商品情報取得用APIClient。認可ページから返されるアクセストークンが必要
-        let platformApiClient = APIClient(baseURL: "https://api.smaregi.dev")
+        let platformApiClient = APIClient(baseURL: AppConfig.platformBaseURL)
         // APIリクエスト → 401エラー → tokenRefresher.refreshToken() → 再リクエスト
         platformApiClient.tokenRefresher = authService
 

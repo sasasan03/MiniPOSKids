@@ -13,7 +13,7 @@ struct AuthRootView: View {
     @State private var authService: AuthService
     
     init(tokenStore: TokenStoreProtocol) {
-        let apiClient = APIClient(baseURL: "https://id.smaregi.dev")
+        let apiClient = APIClient(baseURL: AppConfig.idBaseURL)
         let authService = AuthService(apiClient: apiClient, tokenStore: tokenStore)
         apiClient.tokenRefresher = authService
         _authService = State(initialValue: authService)
