@@ -31,13 +31,6 @@ final class AuthService: AuthServiceProtocol, TokenRefresherProtocol, ContractId
     /// アクセストークンのキャッシュを破棄しても契約自体は変わらないため、ここは保持し続ける。
     private(set) var contractId: String?
 
-    /// `client_id` / `client_secret` を符号化する際に許可する文字（"-._~" のみ追加）
-    private static let formURLEncodedAllowed: CharacterSet = {
-        var allowed = CharacterSet.alphanumerics
-        allowed.insert(charactersIn: "-._~")
-        return allowed
-    }()
-
     private static var clientId: String { AppConfig.smaregiClientId }
     private static var redirectUri: String { AppConfig.oauthRedirectURI }
 
