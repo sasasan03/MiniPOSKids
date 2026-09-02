@@ -22,22 +22,19 @@ struct StoreItemService: StoreProductServiceProtocol {
     }
     
     private let apiClient: APIClientProtocol
-    private let contractId: String
+    private let contractIdProvider: any ContractIdProviding
     private let logger = Logger(subsystem: "com.miniposkids.storeitems", category: "StoreItemService")
     
-    init(apiClient: APIClientProtocol, contractId: String) {
+    init(apiClient: APIClientProtocol, contractIdProvider: any ContractIdProviding) {
         self.apiClient = apiClient
-        self.contractId = contractId
+        self.contractIdProvider = contractIdProvider
     }
     
     func fetchStoreItems(storeId: String) async throws -> [Product] {
         do {
-            var allowed = CharacterSet.urlPathAllowed
-            // URLを構築するものを許可するが、/は使えない。予約文字禁止させる。
-            allowed.remove(charactersIn: "/")
-            // 日本語を%〜〜の形に変換する
-            let encodedContractId = contractId.addingPercentEncoding(withAllowedCharacters: allowed) ?? contractId
-            let encodedStoreId = storeId.addingPercentEncoding(withAllowedCharacters: allowed) ?? storeId
+            // 契約IDはログイン時のアクセストークンから決まるため、リクエストごとに取得する。
+            let encodedContractId = try await contractIdProvider.currentContractId().percentEncodedPathComponent
+            let encodedStoreId = storeId.percentEncodedPathComponent
             let itemsResponse: [StoreItemResponseDTO] = try await apiClient.send(
                 path: "/\(encodedContractId)/pos/stores/\(encodedStoreId)/products",
                 method: .get,
@@ -58,10 +55,8 @@ struct StoreItemService: StoreProductServiceProtocol {
     
     func fetchStoreItem(productID: String) async throws -> Product? {
         do {
-            var allowed = CharacterSet.urlPathAllowed
-            allowed.remove(charactersIn: "/")
-            let encodedContractId = contractId.addingPercentEncoding(withAllowedCharacters: allowed) ?? contractId
-            let encodedProductID = productID.addingPercentEncoding(withAllowedCharacters: allowed) ?? productID
+            let encodedContractId = try await contractIdProvider.currentContractId().percentEncodedPathComponent
+            let encodedProductID = productID.percentEncodedPathComponent
             let itemResponse: StoreItemResponseDTO = try await apiClient.send(
                 path: "/\(encodedContractId)/pos/products/\(encodedProductID)",
                 method: .get,

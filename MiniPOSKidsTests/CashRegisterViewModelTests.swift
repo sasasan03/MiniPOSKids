@@ -28,6 +28,9 @@ final class MockStoreProductService: StoreProductServiceProtocol {
 private enum DummyError: Error { case failure }
 
 /// fire-and-forget な addProduct を待つためのポーリングヘルパー
+///
+/// 監視対象は MainActor 隔離された ViewModel の状態なので、この関数自体も MainActor 上で回す。
+@MainActor
 private func waitUntil(
     timeout: Duration = .milliseconds(500),
     _ condition: @escaping () -> Bool
@@ -41,6 +44,8 @@ private func waitUntil(
 
 // MARK: - Tests
 
+// CashRegisterViewModel は MainActor 隔離のため、テストも MainActor 上で実行する。
+@MainActor
 @Suite("CashRegisterViewModel")
 struct CashRegisterViewModelTests {
 
