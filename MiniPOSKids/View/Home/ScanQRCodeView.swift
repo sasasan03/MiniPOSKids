@@ -12,13 +12,63 @@ import Vision
 // TODO: この画面から次の画面に渡すもの。
 struct ScanQRCodeView: View {
     @Environment(HomeRouter.self) var router
+    @Environment(AppState.self) private var appState
     @State private var scanError: ScanProductBarcodeError?
     @State private var scannedPayload = ""
     @State private var hasHandledScan = false
     let totalAmount: Int
     let cartProducts: [CartProduct]
-    
+
+    /// デモモードで選べる支払い用 QR コードの額面。`SelectAvailableBalanceView` と揃えている。
+    private let demoBalances = [1000, 2000, 3000]
+
     var body: some View {
+        // デモモードでは 1 台の端末で QR コードを表示しつつ読み取ることができないため、
+        // 額面のタップを「QR コードの読み取り成功」として扱う。
+        if appState.isDemo {
+            demoBalancePicker
+        } else {
+            scanner
+        }
+    }
+
+    /// デモモード用。額面を一覧表示し、タップされた金額を読み取り結果として決済処理へ渡す。
+    private var demoBalancePicker: some View {
+        List {
+            Section {
+                ForEach(demoBalances, id: \.self) { balance in
+                    Button {
+                        handleScannedAmount(balance)
+                    } label: {
+                        HStack {
+                            Image(systemName: "qrcode")
+                                .foregroundStyle(.blue)
+                            Text("残高 \(balance)円のQRコード")
+                            Spacer()
+                        }
+                    }
+                }
+            } header: {
+                Text("お支払い金額は \(totalAmount)円です。デモモードのため、カメラの代わりに使用するQRコードをタップしてください。")
+                    .textCase(nil)
+            }
+        }
+    }
+
+    /// 読み取った残高と合計金額を比較し、購入結果画面へ遷移する。
+    /// - Parameter qrCodeValue: QR コードに含まれる利用可能残高。
+    private func handleScannedAmount(_ qrCodeValue: Int) {
+        router.navigationHomeRoutePush(
+            .purchaseResult(
+                totalAmount <= qrCodeValue,
+                totalAmount,
+                qrCodeValue,
+                cartProducts
+            )
+        )
+    }
+
+    private var scanner: some View {
         ZStack {
             BarcodeScannerCameraView(
                 symbologies: [.qr],
@@ -35,26 +85,8 @@ struct ScanQRCodeView: View {
                       !newValue.isEmpty,
                       let qrCodeValue = Int(newValue) else { return }
                 hasHandledScan = true
-                if totalAmount <= qrCodeValue {
-                    router.navigationHomeRoutePush(
-                        .purchaseResult(
-                            true,
-                            totalAmount,
-                            qrCodeValue,
-                            cartProducts
-                        )
-                    )
-                    } else {
-                        router.navigationHomeRoutePush(
-                            .purchaseResult(
-                                false,
-                                totalAmount,
-                                qrCodeValue,
-                                cartProducts
-                            )
-                        )
-                    }
-                }
+                handleScannedAmount(qrCodeValue)
+            }
         }
         .task {
             if !DataScannerViewController.isSupported {
@@ -103,4 +135,5 @@ struct ScanQRCodeView: View {
         ]
     )
     .environment(HomeRouter())
+    .environment(AppState(tokenStore: InMemoryTokenStore()))
 }

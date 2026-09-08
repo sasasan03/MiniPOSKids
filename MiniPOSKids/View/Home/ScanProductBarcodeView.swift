@@ -11,11 +11,48 @@ import Vision
 
 struct ScanProductBarcodeView: View {
     @Environment(HomeRouter.self) var router
+    @Environment(AppState.self) private var appState
     @State private var scanError: ScanProductBarcodeError?
     @State private var scannedPayload = ""
     @State private var hasHandledScan = false
 
     var body: some View {
+        // デモモードでは印刷したバーコードもカメラも用意できないため、
+        // サンプル商品のタップを「読み取り成功」として扱う。
+        if appState.isDemo {
+            demoProductPicker
+        } else {
+            scanner
+        }
+    }
+
+    /// デモモード用。サンプル商品を一覧表示し、タップされた商品をスキャン結果として返す。
+    private var demoProductPicker: some View {
+        List {
+            Section {
+                ForEach(DemoCatalog.products, id: \.productID) { product in
+                    Button {
+                        router.saveScannedBarcode(product.productID)
+                        router.navigationBack()
+                    } label: {
+                        HStack {
+                            Image(systemName: "barcode")
+                                .foregroundStyle(.blue)
+                            Text(product.name)
+                            Spacer()
+                            Text("\(product.price)円")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("デモモードのため、カメラの代わりにサンプル商品をタップしてレジに追加してください。")
+                    .textCase(nil)
+            }
+        }
+    }
+
+    private var scanner: some View {
         ZStack {
             BarcodeScannerCameraView(
                 symbologies: [.code128],
@@ -66,4 +103,5 @@ struct ScanProductBarcodeView: View {
 #Preview {
     ScanProductBarcodeView()
         .environment(HomeRouter())
+        .environment(AppState(tokenStore: InMemoryTokenStore()))
 }

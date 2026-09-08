@@ -21,14 +21,14 @@ struct SettingView: View {
             Button {
                 viewModel.handle(menu)
             } label: {
-                Text(menu.title)
+                Text(viewModel.title(for: menu))
             }
         }
-        .alert("ログアウトしますか？", isPresented: $viewModel.isLogoutAlertPresented) {
+        .alert(viewModel.logoutAlertTitle, isPresented: $viewModel.isLogoutAlertPresented) {
             Button("キャンセル", role: .cancel) {
                 viewModel.dismissLogoutAlert()
             }
-            Button("ログアウト", role: .destructive) {
+            Button(viewModel.logoutConfirmTitle, role: .destructive) {
                 appState.logout()
             }
         }
@@ -36,6 +36,6 @@ struct SettingView: View {
 }
 
 #Preview {
-    SettingView(viewModel: SettingViewModel())
-        .environment(AppState())
+    SettingView(viewModel: SettingViewModel(isDemo: true))
+        .environment(AppState(tokenStore: InMemoryTokenStore()))
 }

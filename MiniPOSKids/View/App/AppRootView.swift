@@ -9,15 +9,16 @@ import SwiftUI
 
 struct AppRootView: View {
     @State private var appState = AppState()
-    
+
     var body: some View {
         Group {
-            if appState.session == .unauthenticated {
+            switch appState.session {
+            case .unauthenticated:
                 AuthRootView(tokenStore: appState.tokenStore)
-            } else if appState.session == .authenticated {
-                HomeRootView(tokenStore: appState.tokenStore)
-            } else {
-                Text("session is not set")
+            case .authenticated:
+                HomeRootView(tokenStore: appState.tokenStore, isDemo: false)
+            case .demo:
+                HomeRootView(tokenStore: appState.tokenStore, isDemo: true)
             }
         }
         .environment(appState)
