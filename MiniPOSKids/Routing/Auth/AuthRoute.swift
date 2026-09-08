@@ -9,5 +9,4 @@ import Foundation
 
 enum AuthRoute: Hashable {
     case login
-    case web
 }

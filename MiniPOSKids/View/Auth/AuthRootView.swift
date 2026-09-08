@@ -34,9 +34,6 @@ struct AuthRootView: View {
         switch route {
         case .login:
             LoginView(authService: authService)
-        case .web:
-            SmaregiWebView()
-                .navigationTitle("スマレジデベロッパー")
         }
     }
 }

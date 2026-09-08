@@ -6,95 +6,113 @@
 import SwiftUI
 
 struct LoginView: View {
-    @Environment(AuthRouter.self) private var router
     @Environment(AppState.self) private var appState
     @State private var viewModel: LoginViewModel
+
+    /// スマレジデベロッパーの新規登録ページ。アプリ内 WebView ではなく Safari で開く。
+    private let smaregiSignUpURL = URL(string: "https://developers.smaregi.jp/signup/")!
 
     init(authService: AuthService) {
         _viewModel = State(initialValue: LoginViewModel(authService: authService))
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            Spacer()
+        ScrollView {
+            VStack(spacing: 24) {
+                // ロゴ / タイトル
+                VStack(spacing: 8) {
+                    Image(systemName: "cart.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 64, height: 64)
+                        .foregroundStyle(.blue)
 
-            // ロゴ / タイトル
-            VStack(spacing: 8) {
-                Image(systemName: "cart.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 64, height: 64)
-                    .foregroundStyle(.blue)
-
-                Text("レジごっこ")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-            }
-
-            if let errorMessage = viewModel.errorMessage {
-                Text(errorMessage)
-                    .foregroundStyle(.red)
-                    .font(.caption)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-
-            // ログインボタン
-            Button {
-                viewModel.login(onSuccess: appState.loginSucceeded)
-            } label: {
-                Text("スマレジでログイン")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-            .padding(.horizontal, 32)
-
-            // スマレジデベロッパの登録
-            VStack {
-                HStack {
-                    Text("スマレジデベロッパの登録をしていない方は")
-                    Button("こちら") {
-                        router.path.append(.web)
-                    }
+                    Text("レジっこ")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
                 }
-                .padding(.vertical, 13)
+                .padding(.top, 32)
+
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundStyle(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+
+                // 登録・ログインなしで全機能を試せる導線。アプリの主導線としてログインより上に置く。
+                VStack(spacing: 8) {
+                    Button {
+                        appState.startDemo()
+                    } label: {
+                        Text("デモモードで試す")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundStyle(.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+
+                    Text("アカウント登録・ログインは不要です。サンプルの店舗と商品ですべての機能をお試しいただけます。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.horizontal, 32)
+
+                Divider()
+                    .padding(.horizontal, 32)
+
+                // 自分のスマレジの商品を使いたい人だけが通る導線
+                VStack(spacing: 8) {
+                    Text("スマレジをご利用中の方は、ご自身の登録商品でお買い物ができます。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        viewModel.login(onSuccess: appState.loginSucceeded)
+                    } label: {
+                        Text("スマレジでログイン（任意）")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .foregroundStyle(Color.blue)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.blue, lineWidth: 1)
+                            )
+                    }
+
+                    Link("スマレジデベロッパーの新規登録（外部サイト）", destination: smaregiSignUpURL)
+                        .font(.caption)
+                }
+                .padding(.horizontal, 32)
+
                 appHowTo
                     .padding(20)
             }
-            Spacer()
         }
     }
 
     private var appHowTo: some View {
-        ZStack {
-            VStack {
-                Text("初めてお使いになる方へ")
-                    .font(.system(size: 20, weight: .bold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 5)
-                VStack(alignment: .leading) {
-                    Text("1. スマレジデベロッパに新規登録（無料）")
-                    Text("2. 商品の登録")
-                    Text("3. 「アプリの登録商品一覧」からPDFダウンロード")
-                    Text("4. バーコードを印刷")
-                    Text("5. アプリでバーコードを読み取ってお買い物")
-                }
-                .font(Font.system(size: 15))
-            }
-            .padding()
-            Rectangle()
-                .stroke(.gray,
-                        style: StrokeStyle(
-                            lineWidth: 5.0,
-                            lineCap: .round,
-                            lineJoin: .round
-                        )
-                )
-                .frame(height: 200)
+        VStack(alignment: .leading, spacing: 8) {
+            Text("スマレジ連携でのお買い物の流れ")
+                .font(.system(size: 18, weight: .bold))
+                .frame(maxWidth: .infinity)
+
+            Text("1. スマレジデベロッパに新規登録（無料）")
+            Text("2. 商品の登録")
+            Text("3. 「アプリの登録商品一覧」からPDFダウンロード")
+            Text("4. バーコードを印刷")
+            Text("5. アプリでバーコードを読み取ってお買い物")
         }
+        .font(Font.system(size: 15))
+        .padding()
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(.gray, lineWidth: 1)
+        )
     }
 }
 
@@ -103,7 +121,6 @@ struct LoginView: View {
 }
 
 private struct PreviewContainer: View {
-    @State private var router = AuthRouter()
     @State private var appState = AppState()
     @State private var authService: AuthService = {
         let store = InMemoryTokenStore()
@@ -115,7 +132,6 @@ private struct PreviewContainer: View {
 
     var body: some View {
         LoginView(authService: authService)
-            .environment(router)
             .environment(appState)
     }
 }

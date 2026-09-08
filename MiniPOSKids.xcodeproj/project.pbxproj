@@ -32,7 +32,6 @@
 		6998AFE12F934D000001CEB0 /* TokenRefresherProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6998AFE02F934D000001CEB0 /* TokenRefresherProtocol.swift */; };
 		69B547A0300D9D1000A0D1DF /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 69B5479F300D9D1000A0D1DF /* PrivacyInfo.xcprivacy */; };
 		69BA5F262F8F5F3C00FF3C71 /* ApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */; };
-		693B76402F8763490078FCAD /* SmaregiWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 693B763F2F8763490078FCAD /* SmaregiWebView.swift */; };
 		69BA5F2C2F8F60BD00FF3C71 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */; };
 		6DE1100000000000000000A1 /* DemoCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE1200000000000000000A1 /* DemoCatalog.swift */; };
 		6DE1100000000000000000A2 /* DemoStoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DE1200000000000000000A2 /* DemoStoreService.swift */; };
@@ -109,7 +108,6 @@
 		6998AFE02F934D000001CEB0 /* TokenRefresherProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenRefresherProtocol.swift; sourceTree = "<group>"; };
 		69B5479F300D9D1000A0D1DF /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		69BA5F252F8F5F3C00FF3C71 /* ApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiClient.swift; sourceTree = "<group>"; };
-		693B763F2F8763490078FCAD /* SmaregiWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmaregiWebView.swift; sourceTree = "<group>"; };
 		69BA5F2B2F8F60BD00FF3C71 /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		6DE1200000000000000000A1 /* DemoCatalog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoCatalog.swift; sourceTree = "<group>"; };
 		6DE1200000000000000000A2 /* DemoStoreService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoStoreService.swift; sourceTree = "<group>"; };
@@ -264,7 +262,6 @@
 			children = (
 				69F095AC2F8C4E8A00477B4F /* AuthRootView.swift */,
 				693B76472F8770CB0078FCAD /* LoginView.swift */,
-				693B763F2F8763490078FCAD /* SmaregiWebView.swift */,
 			);
 			path = Auth;
 			sourceTree = "<group>";
@@ -574,7 +571,6 @@
 				69F095BD2F8C824900477B4F /* SelectAvailableBalanceView.swift in Sources */,
 				692461182F94452300D9DB35 /* Store.swift in Sources */,
 				693B76482F8770CB0078FCAD /* LoginView.swift in Sources */,
-				693B76402F8763490078FCAD /* SmaregiWebView.swift in Sources */,
 				69F095B92F8C820A00477B4F /* StoreListView.swift in Sources */,
 				6946CCFF2F8B217700E9445E /* HomeRouter.swift in Sources */,
 				693B762D2F873FD80078FCAD /* MiniPOSKidsApp.swift in Sources */,
