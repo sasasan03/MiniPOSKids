@@ -2,8 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to scan QR codes.</string>
+	<key>CFBundleDisplayName</key>
+	<string>レジっこ</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -15,6 +15,10 @@
 			</array>
 		</dict>
 	</array>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>商品のバーコードと支払い用のQRコードを読み取るためにカメラを使用します。</string>
 	<key>SMAREGI_CLIENT_ID</key>
 	<string>$(SMAREGI_CLIENT_ID)</string>
 </dict>

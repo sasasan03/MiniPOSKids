@@ -13,11 +13,18 @@ struct HomeRootView: View {
     private let authService: AuthService
     private let storeService: StoreServiceProtocol
     private let storeItemService: StoreProductServiceProtocol
+    private let isDemo: Bool
 
     // AppStoreからトークンを取得（キーチェーンのリフレッシュトークン）するためのtokenStore。
     // 契約者IDはプラットフォームAPIのパスに必要だが、ログイン時のアクセストークンから
     // 取り出すためここでは渡さず、AuthService を ContractIdProviding として注入する。
-    init(tokenStore: TokenStoreProtocol) {
+    /// - Parameters:
+    ///   - tokenStore: アクセストークン／リフレッシュトークンの保管先。
+    ///   - isDemo: デモモードかどうか。true の場合はサンプルデータを返すサービスを注入し、
+    ///     スマレジ API へのリクエストを一切行わない。
+    init(tokenStore: TokenStoreProtocol, isDemo: Bool) {
+        self.isDemo = isDemo
+
         // 認証取得用APIClient
         let authApiClient = APIClient(baseURL: AppConfig.idBaseURL)
         let authService = AuthService(apiClient: authApiClient, tokenStore: tokenStore)
@@ -28,8 +35,13 @@ struct HomeRootView: View {
         platformApiClient.tokenRefresher = authService
 
         self.authService = authService
-        self.storeService = StoreService(apiClient: platformApiClient, contractIdProvider: authService)
-        self.storeItemService = StoreItemService(apiClient: platformApiClient, contractIdProvider: authService)
+        if isDemo {
+            self.storeService = DemoStoreService()
+            self.storeItemService = DemoStoreProductService()
+        } else {
+            self.storeService = StoreService(apiClient: platformApiClient, contractIdProvider: authService)
+            self.storeItemService = StoreItemService(apiClient: platformApiClient, contractIdProvider: authService)
+        }
     }
     
     var body: some View {
@@ -48,7 +60,7 @@ struct HomeRootView: View {
         case .home:
             HomeView()
         case .setting:
-            SettingView(viewModel: SettingViewModel())
+            SettingView(viewModel: SettingViewModel(isDemo: isDemo))
                 .navigationTitle("設定")
         case .storeList:
             StoreListView(viewModel: StoreListViewModel(storeService: storeService))
@@ -90,6 +102,6 @@ struct HomeRootView: View {
 }
 
 #Preview {
-    HomeRootView(tokenStore: InMemoryTokenStore())
+    HomeRootView(tokenStore: InMemoryTokenStore(), isDemo: true)
         .environment(AppState())
 }
