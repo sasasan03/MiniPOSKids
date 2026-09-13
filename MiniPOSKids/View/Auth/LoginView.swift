@@ -9,9 +9,6 @@ struct LoginView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: LoginViewModel
 
-    /// スマレジデベロッパーの新規登録ページ。アプリ内 WebView ではなく Safari で開く。
-    private let smaregiSignUpURL = URL(string: "https://developers.smaregi.jp/signup/")!
-
     init(authService: AuthService) {
         _viewModel = State(initialValue: LoginViewModel(authService: authService))
     }
@@ -83,9 +80,6 @@ struct LoginView: View {
                                     .stroke(Color.blue, lineWidth: 1)
                             )
                     }
-
-                    Link("スマレジデベロッパーの新規登録（外部サイト）", destination: smaregiSignUpURL)
-                        .font(.caption)
                 }
                 .padding(.horizontal, 32)
 
@@ -101,8 +95,8 @@ struct LoginView: View {
                 .font(.system(size: 18, weight: .bold))
                 .frame(maxWidth: .infinity)
 
-            Text("1. スマレジデベロッパに新規登録（無料）")
-            Text("2. 商品の登録")
+            Text("1. スマレジのアカウントでログイン")
+            Text("2. スマレジに商品を登録")
             Text("3. 「アプリの登録商品一覧」からPDFダウンロード")
             Text("4. バーコードを印刷")
             Text("5. アプリでバーコードを読み取ってお買い物")
